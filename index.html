@@ -1,191 +1,403 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PDF Converter | Rad Strix</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--glass-bg:rgba(255,255,255,0.08);--glass-border:rgba(255,255,255,0.12);--glass-shadow:0 8px 32px rgba(0,0,0,0.3);--text-primary:rgba(255,255,255,0.95);--text-secondary:rgba(255,255,255,0.6);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.4)}
-body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 50%,#0f0f1a 100%);min-height:100vh;overflow-x:hidden;color:var(--text-primary)}
-#splash{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 50%,#0f0f1a 100%);transition:opacity 0.8s ease,visibility 0.8s ease}
-#splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
-#splash h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:700;background:linear-gradient(135deg,#fff 0%,#6366f1 50%,#8b5cf6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;letter-spacing:-0.02em}
-#splash p{font-size:clamp(0.875rem,2vw,1rem);color:var(--text-secondary);font-weight:300;letter-spacing:0.1em}
-#splash .loader{width:200px;height:2px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:3rem;overflow:hidden}
-#splash .loader::after{content:'';display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading 1.5s ease-in-out infinite}
-@keyframes loading{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
-#plexus-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
-.app-container{position:relative;z-index:1;min-height:100vh;padding:2rem;display:flex;flex-direction:column;align-items:center}
-.header{text-align:center;margin-bottom:3rem}
-.header h1{font-size:clamp(1.5rem,4vw,2.5rem);font-weight:600;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.8) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.02em}
-.header p{color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;font-weight:300}
-.glass-card{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:24px;box-shadow:var(--glass-shadow);padding:2rem;width:100%;max-width:900px}
-.upload-zone{border:2px dashed rgba(255,255,255,0.2);border-radius:16px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
-.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(99,102,241,0.05)}
-.upload-zone::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(99,102,241,0.1) 0%,transparent 70%);opacity:0;transition:opacity 0.3s ease}
-.upload-zone:hover::before{opacity:1}
-.upload-icon{width:64px;height:64px;margin:0 auto 1.5rem;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.2) 0%,rgba(139,92,246,0.2) 100%);display:flex;align-items:center;justify-content:center}
-.upload-icon svg{width:32px;height:32px;stroke:var(--accent)}
-.upload-zone h3{font-size:1.125rem;font-weight:500;margin-bottom:0.5rem}
-.upload-zone p{color:var(--text-secondary);font-size:0.875rem}
-.supported-formats{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:1rem}
-.format-tag{padding:0.25rem 0.75rem;background:rgba(255,255,255,0.05);border-radius:20px;font-size:0.75rem;color:var(--text-secondary)}
-#file-input{display:none}
-.file-preview{margin-top:2rem;display:none}
-.file-preview.active{display:block}
-.file-info{display:flex;align-items:center;gap:1rem;padding:1rem;background:rgba(255,255,255,0.03);border-radius:12px;margin-bottom:1.5rem}
-.file-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0}
-.file-icon svg{width:24px;height:24px;stroke:#fff}
-.file-details{flex:1;min-width:0}
-.file-details h4{font-size:0.875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.file-details p{font-size:0.75rem;color:var(--text-secondary);margin-top:0.25rem}
-.remove-file{width:36px;height:36px;border-radius:10px;border:none;background:rgba(239,68,68,0.1);color:#ef4444;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center}
-.remove-file:hover{background:rgba(239,68,68,0.2)}
-.section-title{font-size:0.875rem;font-weight:500;margin-bottom:1rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em}
-.sheets-container{display:grid;gap:0.5rem;margin-bottom:1.5rem}
-.sheet-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border-radius:10px;cursor:pointer;transition:all 0.2s ease}
-.sheet-item:hover{background:rgba(255,255,255,0.06)}
-.sheet-item.selected{background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3)}
-.sheet-checkbox{width:18px;height:18px;border-radius:5px;border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
-.sheet-item.selected .sheet-checkbox{background:var(--accent);border-color:var(--accent)}
-.sheet-checkbox svg{width:12px;height:12px;stroke:#fff;opacity:0;transition:opacity 0.2s ease}
-.sheet-item.selected .sheet-checkbox svg{opacity:1}
-.sheet-name{font-size:0.875rem;flex:1}
-.sheet-cells{font-size:0.75rem;color:var(--text-secondary)}
-.range-detection{padding:1rem;background:rgba(99,102,241,0.05);border-radius:12px;border:1px solid rgba(99,102,241,0.1);margin-bottom:1.5rem}
-.range-info{display:flex;flex-wrap:wrap;gap:1rem;font-size:0.875rem}
-.range-item{display:flex;align-items:center;gap:0.5rem}
-.range-label{color:var(--text-secondary)}
-.range-value{font-weight:500;color:var(--accent)}
-.options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
-.option-group{padding:1rem;background:rgba(255,255,255,0.02);border-radius:12px}
-.option-group label{display:block;font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em}
-.option-group select,.option-group input{width:100%;padding:0.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;transition:border-color 0.2s ease}
-.option-group select:focus,.option-group input:focus{border-color:var(--accent)}
-.option-group select option{background:#1a1a2e}
-.toggle-option{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:rgba(255,255,255,0.02);border-radius:10px}
-.toggle-option span{font-size:0.875rem}
-.toggle{width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;position:relative;cursor:pointer;transition:background 0.2s ease}
-.toggle.active{background:var(--accent)}
-.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform 0.2s ease}
-.toggle.active::after{transform:translateX(20px)}
-.convert-btn{width:100%;padding:1rem;background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:500;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
-.convert-btn:hover{transform:translateY(-2px);box-shadow:0 10px 40px var(--accent-glow)}
-.convert-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
-.convert-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transform:translateX(-100%);transition:transform 0.5s ease}
-.convert-btn:hover::before{transform:translateX(100%)}
-.progress-container{margin-top:1.5rem;display:none}
-.progress-container.active{display:block}
-.progress-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
-.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#8b5cf6);width:0%;transition:width 0.3s ease}
-.progress-text{display:flex;justify-content:space-between;margin-top:0.75rem;font-size:0.75rem;color:var(--text-secondary)}
-.preview-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:2rem;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px)}
-.preview-modal.active{display:flex}
-.preview-content{background:linear-gradient(135deg,#1a1a2e 0%,#0f0f1a 100%);border-radius:24px;border:1px solid var(--glass-border);width:100%;max-width:1200px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
-.preview-header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.05)}
-.preview-header h3{font-size:1rem;font-weight:500}
-.close-preview{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,0.05);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s ease}
-.close-preview:hover{background:rgba(255,255,255,0.1)}
-.preview-body{flex:1;overflow:auto;padding:1.5rem}
-.preview-canvas{background:#fff;border-radius:8px;margin:0 auto;display:block;max-width:100%}
-.preview-footer{display:flex;gap:1rem;padding:1.5rem;border-top:1px solid rgba(255,255,255,0.05)}
-.preview-footer button{flex:1;padding:0.875rem;border-radius:10px;font-size:0.875rem;font-weight:500;cursor:pointer;transition:all 0.2s ease}
-.btn-secondary{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary)}
-.btn-secondary:hover{background:rgba(255,255,255,0.1)}
-.btn-primary{background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);border:none;color:#fff}
-.btn-primary:hover{box-shadow:0 5px 20px var(--accent-glow)}
-#excel-render{position:absolute;left:-9999px;top:0}
-.split-info{margin-top:1rem;padding:0.75rem;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:0.813rem;color:#fbbf24}
-.watermark-preview{text-align:center;padding:1rem;background:rgba(255,255,255,0.02);border-radius:8px;margin-top:1rem}
-.watermark-preview span{font-size:0.75rem;color:var(--text-secondary);font-style:italic}
-@media(max-width:768px){.app-container{padding:1rem}.glass-card{padding:1.5rem;border-radius:20px}.upload-zone{padding:2rem 1rem}.options-grid{grid-template-columns:1fr}.preview-modal{padding:1rem}.preview-content{border-radius:16px}}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diversity - Perilaku Organisasi</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            width: 1280px;
+            height: 720px;
+            overflow: hidden;
+            background-color: #FFFFF0;
+            font-family: 'Georgia', serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            z-index: 0;
+        }
+
+        .slide-container {
+            width: 1280px;
+            height: 720px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #FAFAF5;
+        }
+
+        .content {
+            position: relative;
+            z-index: 10;
+            text-align: center;
+            padding: 40px 80px;
+        }
+
+        .mata-kuliah {
+            font-family: 'Georgia', serif;
+            font-size: 16px;
+            font-weight: 400;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: #555550;
+            margin-bottom: 18px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.3s;
+        }
+
+        .divider-top {
+            width: 80px;
+            height: 1.5px;
+            background: linear-gradient(to right, transparent, #1a1a1a, transparent);
+            margin: 0 auto 30px auto;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.5s;
+        }
+
+        .main-title {
+            font-family: 'Georgia', serif;
+            font-size: 96px;
+            font-weight: 700;
+            color: #1a1a1a;
+            letter-spacing: 12px;
+            text-transform: uppercase;
+            line-height: 1;
+            margin-bottom: 8px;
+            opacity: 0;
+            animation: fadeUp 1s ease forwards 0.7s;
+            text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
+        }
+
+        .subtitle-line {
+            font-family: 'Georgia', serif;
+            font-size: 18px;
+            font-style: italic;
+            color: #444440;
+            letter-spacing: 3px;
+            margin-bottom: 40px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 0.9s;
+        }
+
+        .divider-bottom {
+            width: 200px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, #1a1a1a 30%, #1a1a1a 70%, transparent);
+            margin: 0 auto 35px auto;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 1.1s;
+        }
+
+        .kelompok-box {
+            display: inline-block;
+            border: 1.5px solid #1a1a1a;
+            padding: 12px 40px;
+            opacity: 0;
+            animation: fadeUp 0.8s ease forwards 1.3s;
+            position: relative;
+        }
+
+        .kelompok-box::before,
+        .kelompok-box::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border: 1.5px solid #1a1a1a;
+        }
+
+        .kelompok-box::before {
+            top: -4px;
+            left: -4px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .kelompok-box::after {
+            bottom: -4px;
+            right: -4px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .kelompok-label {
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #888880;
+            font-family: 'Georgia', serif;
+            margin-bottom: 4px;
+        }
+
+        .kelompok-name {
+            font-size: 20px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            text-transform: uppercase;
+            color: #1a1a1a;
+            font-family: 'Georgia', serif;
+        }
+
+        /* Corner decorations */
+        .corner {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            z-index: 10;
+        }
+
+        .corner-tl {
+            top: 25px;
+            left: 25px;
+            border-top: 2px solid #1a1a1a;
+            border-left: 2px solid #1a1a1a;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.5s;
+        }
+
+        .corner-tr {
+            top: 25px;
+            right: 25px;
+            border-top: 2px solid #1a1a1a;
+            border-right: 2px solid #1a1a1a;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.5s;
+        }
+
+        .corner-bl {
+            bottom: 25px;
+            left: 25px;
+            border-bottom: 2px solid #1a1a1a;
+            border-left: 2px solid #1a1a1a;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.5s;
+        }
+
+        .corner-br {
+            bottom: 25px;
+            right: 25px;
+            border-bottom: 2px solid #1a1a1a;
+            border-right: 2px solid #1a1a1a;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.5s;
+        }
+
+        /* Dot decorations */
+        .dot-accent {
+            position: absolute;
+            z-index: 10;
+            display: flex;
+            gap: 6px;
+            align-items: center;
+        }
+
+        .dot-accent.left {
+            left: 90px;
+            top: 50%;
+            transform: translateY(-50%);
+            flex-direction: column;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.6s;
+        }
+
+        .dot-accent.right {
+            right: 90px;
+            top: 50%;
+            transform: translateY(-50%);
+            flex-direction: column;
+            opacity: 0;
+            animation: fadeIn 1s ease forwards 1.6s;
+        }
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background-color: #1a1a1a;
+            opacity: 0.4;
+        }
+
+        .dot.big {
+            width: 6px;
+            height: 6px;
+            opacity: 0.7;
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(25px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+    </style>
 </head>
 <body>
-<div id="splash"><canvas id="splash-plexus"></canvas><h1>PDF Converter</h1><p>by Rad Strix</p><div class="loader"></div></div>
-<canvas id="plexus-canvas"></canvas>
-<div class="app-container">
-<header class="header"><h1>PDF Converter</h1><p>Professional document conversion with intelligent detection</p></header>
-<main class="glass-card">
-<div class="upload-zone" id="upload-zone">
-<div class="upload-icon"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg></div>
-<h3>Drop your file here</h3>
-<p>or click to browse</p>
-<div class="supported-formats"><span class="format-tag">XLSX</span><span class="format-tag">XLS</span><span class="format-tag">DOCX</span><span class="format-tag">PNG</span><span class="format-tag">JPEG</span><span class="format-tag">CSV</span></div>
-</div>
-<input type="file" id="file-input" accept=".xlsx,.xls,.csv,.docx,.doc,.png,.jpg,.jpeg,.gif,.webp">
-<div class="file-preview" id="file-preview">
-<div class="file-info"><div class="file-icon"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div><div class="file-details"><h4 id="file-name">document.xlsx</h4><p id="file-size">2.4 MB</p></div><button class="remove-file" id="remove-file"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
-<div id="excel-options" style="display:none">
-<p class="section-title">Sheets</p>
-<div class="sheets-container" id="sheets-container"></div>
-<div class="range-detection" id="range-detection"><p class="section-title" style="margin-bottom:0.75rem">Auto-detected Range</p><div class="range-info"><div class="range-item"><span class="range-label">Active Area:</span><span class="range-value" id="active-range">A1:Z100</span></div><div class="range-item"><span class="range-label">Rows:</span><span class="range-value" id="row-count">100</span></div><div class="range-item"><span class="range-label">Columns:</span><span class="range-value" id="col-count">26</span></div></div><div class="split-info" id="split-info" style="display:none">Content will be split into <strong id="split-count">2</strong> pages for optimal layout</div></div>
-</div>
-<div class="options-grid">
-<div class="option-group"><label>Page Size</label><select id="page-size"><option value="a4">A4</option><option value="letter">Letter</option><option value="legal">Legal</option><option value="a3">A3</option></select></div>
-<div class="option-group"><label>Orientation</label><select id="orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>
-<div class="option-group"><label>Quality</label><select id="quality"><option value="high">High (300 DPI)</option><option value="medium">Medium (150 DPI)</option><option value="web">Web (72 DPI)</option></select></div>
-<div class="option-group"><label>Max Width (columns)</label><input type="number" id="max-cols" value="15" min="5" max="50"></div>
-</div>
-<div class="toggle-option" style="margin-bottom:1rem"><span>Include Watermark</span><div class="toggle active" id="watermark-toggle"></div></div>
-<div class="watermark-preview" id="watermark-preview"><span>Watermark: "rad strix" - centered at bottom</span></div>
-<button class="convert-btn" id="convert-btn" disabled>Convert to PDF</button>
-<div class="progress-container" id="progress-container"><div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div><div class="progress-text"><span id="progress-status">Processing...</span><span id="progress-percent">0%</span></div></div>
-</div>
-</main>
-</div>
-<div class="preview-modal" id="preview-modal">
-<div class="preview-content"><div class="preview-header"><h3>Preview</h3><button class="close-preview" id="close-preview"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div><div class="preview-body"><canvas class="preview-canvas" id="preview-canvas"></canvas></div><div class="preview-footer"><button class="btn-secondary" id="cancel-download">Cancel</button><button class="btn-primary" id="confirm-download">Download PDF</button></div></div>
-</div>
-<div id="excel-render"></div>
-<script>
-class PlexusEffect{constructor(canvas,opts={}){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.particles=[];this.mouse={x:null,y:null,px:null,py:null};this.opts={particleCount:opts.particleCount||80,particleSize:opts.particleSize||2,lineDistance:opts.lineDistance||150,mouseInfluence:opts.mouseInfluence||100,speed:opts.speed||0.3,viscosity:opts.viscosity||0.92,...opts};this.resize();this.init();this.bindEvents();this.animate()}
-resize(){this.width=this.canvas.width=window.innerWidth;this.height=this.canvas.height=window.innerHeight}
-init(){this.particles=[];for(let i=0;i<this.opts.particleCount;i++){this.particles.push({x:Math.random()*this.width,y:Math.random()*this.height,vx:(Math.random()-0.5)*this.opts.speed,vy:(Math.random()-0.5)*this.opts.speed,targetX:null,targetY:null})}}
-bindEvents(){window.addEventListener('resize',()=>{this.resize();this.init()});window.addEventListener('mousemove',e=>{this.mouse.px=this.mouse.x;this.mouse.py=this.mouse.y;this.mouse.x=e.clientX;this.mouse.y=e.clientY});window.addEventListener('mouseleave',()=>{this.mouse.x=null;this.mouse.y=null})}
-animate(){this.ctx.clearRect(0,0,this.width,this.height);this.particles.forEach((p,i)=>{if(this.mouse.x!==null&&this.mouse.px!==null){const dx=p.x-this.mouse.x,dy=p.y-this.mouse.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<this.opts.mouseInfluence){const mvx=(this.mouse.x-this.mouse.px)*0.05,mvy=(this.mouse.y-this.mouse.py)*0.05;p.vx+=(mvx*((this.opts.mouseInfluence-dist)/this.opts.mouseInfluence))*0.1;p.vy+=(mvy*((this.opts.mouseInfluence-dist)/this.opts.mouseInfluence))*0.1}}
-p.vx*=this.opts.viscosity;p.vy*=this.opts.viscosity;p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>this.width)p.vx*=-1;if(p.y<0||p.y>this.height)p.vy*=-1;p.x=Math.max(0,Math.min(this.width,p.x));p.y=Math.max(0,Math.min(this.height,p.y));this.ctx.beginPath();this.ctx.arc(p.x,p.y,this.opts.particleSize,0,Math.PI*2);const gradient=this.ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,this.opts.particleSize*2);gradient.addColorStop(0,'rgba(99,102,241,0.8)');gradient.addColorStop(1,'rgba(139,92,246,0.2)');this.ctx.fillStyle=gradient;this.ctx.fill();for(let j=i+1;j<this.particles.length;j++){const p2=this.particles[j],dx=p.x-p2.x,dy=p.y-p2.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<this.opts.lineDistance){const opacity=1-(dist/this.opts.lineDistance);const lineGradient=this.ctx.createLinearGradient(p.x,p.y,p2.x,p2.y);lineGradient.addColorStop(0,`rgba(99,102,241,${opacity*0.5})`);lineGradient.addColorStop(0.5,`rgba(139,92,246,${opacity*0.6})`);lineGradient.addColorStop(1,`rgba(99,102,241,${opacity*0.5})`);this.ctx.beginPath();this.ctx.moveTo(p.x,p.y);this.ctx.lineTo(p2.x,p2.y);this.ctx.strokeStyle=lineGradient;this.ctx.lineWidth=opacity*1.5;this.ctx.stroke()}}});this.ctx.fillStyle='rgba(99,102,241,0.03)';this.ctx.filter='blur(40px)';this.ctx.beginPath();this.ctx.arc(this.width*0.3,this.height*0.3,200,0,Math.PI*2);this.ctx.fill();this.ctx.beginPath();this.ctx.arc(this.width*0.7,this.height*0.7,250,0,Math.PI*2);this.ctx.fill();this.ctx.filter='none';requestAnimationFrame(()=>this.animate())}}
-class PDFConverter{constructor(){this.file=null;this.fileType=null;this.workbook=null;this.sheets=[];this.selectedSheets=[];this.detectedRanges={};this.init()}
-init(){this.bindElements();this.bindEvents();this.initSplash()}
-bindElements(){this.uploadZone=document.getElementById('upload-zone');this.fileInput=document.getElementById('file-input');this.filePreview=document.getElementById('file-preview');this.fileName=document.getElementById('file-name');this.fileSize=document.getElementById('file-size');this.removeFileBtn=document.getElementById('remove-file');this.excelOptions=document.getElementById('excel-options');this.sheetsContainer=document.getElementById('sheets-container');this.rangeDetection=document.getElementById('range-detection');this.activeRange=document.getElementById('active-range');this.rowCount=document.getElementById('row-count');this.colCount=document.getElementById('col-count');this.splitInfo=document.getElementById('split-info');this.splitCount=document.getElementById('split-count');this.convertBtn=document.getElementById('convert-btn');this.progressContainer=document.getElementById('progress-container');this.progressFill=document.getElementById('progress-fill');this.progressStatus=document.getElementById('progress-status');this.progressPercent=document.getElementById('progress-percent');this.watermarkToggle=document.getElementById('watermark-toggle');this.watermarkPreview=document.getElementById('watermark-preview');this.previewModal=document.getElementById('preview-modal');this.previewCanvas=document.getElementById('preview-canvas');this.closePreview=document.getElementById('close-preview');this.cancelDownload=document.getElementById('cancel-download');this.confirmDownload=document.getElementById('confirm-download');this.pageSizeSelect=document.getElementById('page-size');this.orientationSelect=document.getElementById('orientation');this.qualitySelect=document.getElementById('quality');this.maxColsInput=document.getElementById('max-cols')}
-bindEvents(){this.uploadZone.addEventListener('click',()=>this.fileInput.click());this.uploadZone.addEventListener('dragover',e=>{e.preventDefault();this.uploadZone.classList.add('dragover')});this.uploadZone.addEventListener('dragleave',()=>this.uploadZone.classList.remove('dragover'));this.uploadZone.addEventListener('drop',e=>{e.preventDefault();this.uploadZone.classList.remove('dragover');if(e.dataTransfer.files.length)this.handleFile(e.dataTransfer.files[0])});this.fileInput.addEventListener('change',e=>{if(e.target.files.length)this.handleFile(e.target.files[0])});this.removeFileBtn.addEventListener('click',()=>this.resetFile());this.watermarkToggle.addEventListener('click',()=>{this.watermarkToggle.classList.toggle('active');this.watermarkPreview.style.display=this.watermarkToggle.classList.contains('active')?'block':'none'});this.convertBtn.addEventListener('click',()=>this.convert());this.closePreview.addEventListener('click',()=>this.previewModal.classList.remove('active'));this.cancelDownload.addEventListener('click',()=>this.previewModal.classList.remove('active'));this.confirmDownload.addEventListener('click',()=>this.downloadPDF());this.maxColsInput.addEventListener('change',()=>this.updateSplitInfo())}
-initSplash(){const splashCanvas=document.getElementById('splash-plexus');if(splashCanvas){splashCanvas.style.cssText='position:absolute;inset:0;z-index:-1';new PlexusEffect(splashCanvas,{particleCount:60,lineDistance:120})}
-setTimeout(()=>{document.getElementById('splash').classList.add('hidden');new PlexusEffect(document.getElementById('plexus-canvas'))},2500)}
-handleFile(file){this.file=file;this.fileName.textContent=file.name;this.fileSize.textContent=this.formatSize(file.size);this.filePreview.classList.add('active');this.convertBtn.disabled=false;const ext=file.name.split('.').pop().toLowerCase();if(['xlsx','xls','csv'].includes(ext)){this.fileType='excel';this.parseExcel(file)}else if(['docx','doc'].includes(ext)){this.fileType='document';this.excelOptions.style.display='none'}else if(['png','jpg','jpeg','gif','webp'].includes(ext)){this.fileType='image';this.excelOptions.style.display='none'}}
-parseExcel(file){const reader=new FileReader();reader.onload=e=>{this.workbook=XLSX.read(e.target.result,{type:'array'});this.sheets=this.workbook.SheetNames;this.selectedSheets=[...this.sheets];this.renderSheets();this.excelOptions.style.display='block';if(this.sheets.length>0)this.analyzeSheet(this.sheets[0])};reader.readAsArrayBuffer(file)}
-renderSheets(){this.sheetsContainer.innerHTML=this.sheets.map((name,i)=>`<div class="sheet-item selected" data-sheet="${name}"><div class="sheet-checkbox"><svg fill="none" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><span class="sheet-name">${name}</span><span class="sheet-cells" id="cells-${i}">analyzing...</span></div>`).join('');this.sheetsContainer.querySelectorAll('.sheet-item').forEach(item=>{item.addEventListener('click',()=>{item.classList.toggle('selected');const sheet=item.dataset.sheet;if(item.classList.contains('selected')){if(!this.selectedSheets.includes(sheet))this.selectedSheets.push(sheet)}else{this.selectedSheets=this.selectedSheets.filter(s=>s!==sheet)}
-if(this.selectedSheets.length>0)this.analyzeSheet(this.selectedSheets[0])})});this.sheets.forEach((name,i)=>{const range=this.detectActiveRange(this.workbook.Sheets[name]);document.getElementById(`cells-${i}`).textContent=range.display})}
-detectActiveRange(sheet){if(!sheet['!ref'])return{start:'A1',end:'A1',rows:0,cols:0,display:'Empty'};const ref=sheet['!ref'];const range=XLSX.utils.decode_range(ref);let minRow=Infinity,maxRow=-1,minCol=Infinity,maxCol=-1;for(let r=range.s.r;r<=range.e.r;r++){for(let c=range.s.c;c<=range.e.c;c++){const addr=XLSX.utils.encode_cell({r,c});if(sheet[addr]&&sheet[addr].v!==undefined&&sheet[addr].v!==''){minRow=Math.min(minRow,r);maxRow=Math.max(maxRow,r);minCol=Math.min(minCol,c);maxCol=Math.max(maxCol,c)}}}
-if(maxRow===-1)return{start:'A1',end:'A1',rows:0,cols:0,display:'Empty'};const start=XLSX.utils.encode_cell({r:minRow,c:minCol});const end=XLSX.utils.encode_cell({r:maxRow,c:maxCol});const rows=maxRow-minRow+1;const cols=maxCol-minCol+1;return{start,end,rows,cols,minRow,maxRow,minCol,maxCol,display:`${start}:${end}`}}
-analyzeSheet(sheetName){const sheet=this.workbook.Sheets[sheetName];const range=this.detectActiveRange(sheet);this.detectedRanges[sheetName]=range;this.activeRange.textContent=range.display;this.rowCount.textContent=range.rows;this.colCount.textContent=range.cols;this.updateSplitInfo()}
-updateSplitInfo(){const maxCols=parseInt(this.maxColsInput.value)||15;let totalSplits=0;this.selectedSheets.forEach(name=>{const range=this.detectedRanges[name]||this.detectActiveRange(this.workbook.Sheets[name]);if(range.cols>maxCols)totalSplits+=Math.ceil(range.cols/maxCols);else totalSplits++});if(totalSplits>this.selectedSheets.length){this.splitInfo.style.display='block';this.splitCount.textContent=totalSplits}else{this.splitInfo.style.display='none'}}
-formatSize(bytes){if(bytes<1024)return bytes+' B';if(bytes<1048576)return(bytes/1024).toFixed(1)+' KB';return(bytes/1048576).toFixed(1)+' MB'}
-resetFile(){this.file=null;this.workbook=null;this.sheets=[];this.selectedSheets=[];this.detectedRanges={};this.filePreview.classList.remove('active');this.excelOptions.style.display='none';this.convertBtn.disabled=true;this.fileInput.value=''}
-async convert(){this.progressContainer.classList.add('active');this.convertBtn.disabled=true;this.updateProgress(0,'Initializing...');try{if(this.fileType==='excel')await this.convertExcel();else if(this.fileType==='image')await this.convertImage();else if(this.fileType==='document')await this.convertDocument();this.updateProgress(100,'Complete')}catch(err){console.error(err);this.updateProgress(0,'Error: '+err.message)}finally{this.convertBtn.disabled=false}}
-updateProgress(percent,status){this.progressFill.style.width=percent+'%';this.progressPercent.textContent=percent+'%';this.progressStatus.textContent=status}
-async convertExcel(){const {PDFDocument,rgb,StandardFonts}=PDFLib;const pdfDoc=await PDFDocument.create();const font=await pdfDoc.embedFont(StandardFonts.Helvetica);const pageSize=this.getPageSize();const quality=this.getQuality();const maxCols=parseInt(this.maxColsInput.value)||15;const isLandscape=this.orientationSelect.value==='landscape';const [baseW,baseH]=pageSize;const [pageW,pageH]=isLandscape?[baseH,baseW]:[baseW,baseH];let processed=0;const total=this.selectedSheets.length;for(const sheetName of this.selectedSheets){this.updateProgress(Math.round((processed/total)*80),`Processing ${sheetName}...`);const sheet=this.workbook.Sheets[sheetName];const range=this.detectedRanges[sheetName]||this.detectActiveRange(sheet);if(range.rows===0)continue;const numSplits=Math.ceil(range.cols/maxCols);for(let split=0;split<numSplits;split++){const startCol=range.minCol+split*maxCols;const endCol=Math.min(startCol+maxCols-1,range.maxCol);const canvas=await this.renderSheetToCanvas(sheet,{minRow:range.minRow,maxRow:range.maxRow,minCol:startCol,maxCol:endCol},quality);const imgData=canvas.toDataURL('image/png');const img=await pdfDoc.embedPng(imgData);const page=pdfDoc.addPage([pageW,pageH]);const margin=40;const maxW=pageW-margin*2;const maxH=pageH-margin*2-30;const scale=Math.min(maxW/img.width,maxH/img.height,1);const imgW=img.width*scale;const imgH=img.height*scale;page.drawImage(img,{x:(pageW-imgW)/2,y:pageH-margin-imgH,width:imgW,height:imgH});if(this.watermarkToggle.classList.contains('active')){const text='rad strix';const textW=font.widthOfTextAtSize(text,10);page.drawText(text,{x:(pageW-textW)/2,y:25,size:10,font,color:rgb(0.5,0.5,0.5)})}}
-processed++}
-this.updateProgress(90,'Generating PDF...');this.pdfBytes=await pdfDoc.save();this.showPreview()}
-async renderSheetToCanvas(sheet,bounds,dpi){const{minRow,maxRow,minCol,maxCol}=bounds;const scale=dpi/72;const cellW=80*scale,cellH=24*scale,padding=10*scale;const cols=maxCol-minCol+1;const rows=maxRow-minRow+1;const canvas=document.createElement('canvas');canvas.width=cols*cellW+padding*2;canvas.height=rows*cellH+padding*2;const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.font=`${12*scale}px Inter, Arial, sans-serif`;ctx.textBaseline='middle';for(let r=minRow;r<=maxRow;r++){for(let c=minCol;c<=maxCol;c++){const addr=XLSX.utils.encode_cell({r,c});const cell=sheet[addr];const x=padding+(c-minCol)*cellW;const y=padding+(r-minRow)*cellH;ctx.strokeStyle='#e0e0e0';ctx.lineWidth=scale;ctx.strokeRect(x,y,cellW,cellH);if(cell&&cell.v!==undefined){ctx.fillStyle='#000000';const text=String(cell.v);const maxTextW=cellW-8*scale;let displayText=text;while(ctx.measureText(displayText).width>maxTextW&&displayText.length>1){displayText=displayText.slice(0,-1)}
-if(displayText!==text)displayText+='…';ctx.fillText(displayText,x+4*scale,y+cellH/2)}}}
-return canvas}
-async convertImage(){const {PDFDocument,rgb,StandardFonts}=PDFLib;const pdfDoc=await PDFDocument.create();const font=await pdfDoc.embedFont(StandardFonts.Helvetica);const pageSize=this.getPageSize();const isLandscape=this.orientationSelect.value==='landscape';const [baseW,baseH]=pageSize;const [pageW,pageH]=isLandscape?[baseH,baseW]:[baseW,baseH];this.updateProgress(30,'Loading image...');const imgData=await this.readFileAsDataURL(this.file);let img;if(this.file.type==='image/png')img=await pdfDoc.embedPng(imgData);else img=await pdfDoc.embedJpg(imgData);this.updateProgress(60,'Creating PDF...');const page=pdfDoc.addPage([pageW,pageH]);const margin=40;const maxW=pageW-margin*2;const maxH=pageH-margin*2-30;const scale=Math.min(maxW/img.width,maxH/img.height,1);const imgW=img.width*scale;const imgH=img.height*scale;page.drawImage(img,{x:(pageW-imgW)/2,y:pageH-margin-imgH,width:imgW,height:imgH});if(this.watermarkToggle.classList.contains('active')){const text='rad strix';const textW=font.widthOfTextAtSize(text,10);page.drawText(text,{x:(pageW-textW)/2,y:25,size:10,font,color:rgb(0.5,0.5,0.5)})}
-this.updateProgress(90,'Generating PDF...');this.pdfBytes=await pdfDoc.save();this.showPreview()}
-async convertDocument(){this.updateProgress(20,'Reading document...');const arrayBuffer=await this.file.arrayBuffer();const result=await mammoth.convertToHtml({arrayBuffer});this.updateProgress(50,'Rendering...');const container=document.createElement('div');container.style.cssText='position:absolute;left:-9999px;width:800px;padding:40px;background:#fff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#000';container.innerHTML=result.value;document.body.appendChild(container);const canvas=await html2canvas(container,{scale:2,useCORS:true,backgroundColor:'#ffffff'});document.body.removeChild(container);this.updateProgress(70,'Creating PDF...');const{PDFDocument,rgb,StandardFonts}=PDFLib;const pdfDoc=await PDFDocument.create();const font=await pdfDoc.embedFont(StandardFonts.Helvetica);const pageSize=this.getPageSize();const isLandscape=this.orientationSelect.value==='landscape';const[baseW,baseH]=pageSize;const[pageW,pageH]=isLandscape?[baseH,baseW]:[baseW,baseH];const imgData=canvas.toDataURL('image/png');const img=await pdfDoc.embedPng(imgData);const margin=40;const maxW=pageW-margin*2;const maxH=pageH-margin*2-30;const scale=Math.min(maxW/img.width,maxH/img.height,1);const imgW=img.width*scale;const imgH=img.height*scale;const page=pdfDoc.addPage([pageW,pageH]);page.drawImage(img,{x:(pageW-imgW)/2,y:pageH-margin-imgH,width:imgW,height:imgH});if(this.watermarkToggle.classList.contains('active')){const text='rad strix';const textW=font.widthOfTextAtSize(text,10);page.drawText(text,{x:(pageW-textW)/2,y:25,size:10,font,color:rgb(0.5,0.5,0.5)})}
-this.updateProgress(90,'Generating PDF...');this.pdfBytes=await pdfDoc.save();this.showPreview()}
-readFileAsDataURL(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
-getPageSize(){const sizes={a4:[595.28,841.89],letter:[612,792],legal:[612,1008],a3:[841.89,1190.55]};return sizes[this.pageSizeSelect.value]||sizes.a4}
-getQuality(){const dpi={high:300,medium:150,web:72};return dpi[this.qualitySelect.value]||150}
-async showPreview(){this.updateProgress(95,'Generating preview...');const{PDFDocument}=PDFLib;const pdfDoc=await PDFDocument.load(this.pdfBytes);const page=pdfDoc.getPage(0);const{width,height}=page.getSize();const scale=Math.min(800/width,600/height,2);this.previewCanvas.width=width*scale;this.previewCanvas.height=height*scale;const ctx=this.previewCanvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,this.previewCanvas.width,this.previewCanvas.height);ctx.fillStyle='#f0f0f0';ctx.font='16px Inter';ctx.textAlign='center';ctx.fillText('PDF Preview',this.previewCanvas.width/2,this.previewCanvas.height/2-10);ctx.font='12px Inter';ctx.fillText(`${Math.round(width)} x ${Math.round(height)} pt`,this.previewCanvas.width/2,this.previewCanvas.height/2+15);ctx.fillText(`${pdfDoc.getPageCount()} page(s)`,this.previewCanvas.width/2,this.previewCanvas.height/2+35);this.previewModal.classList.add('active');this.updateProgress(100,'Ready to download')}
-downloadPDF(){const blob=new Blob([this.pdfBytes],{type:'application/pdf'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.file.name.replace(/\.[^.]+$/,'')+'.pdf';a.click();URL.revokeObjectURL(url);this.previewModal.classList.remove('active');this.progressContainer.classList.remove('active')}}
-document.addEventListener('DOMContentLoaded',()=>new PDFConverter());
-</script>
+    <div class="slide-container">
+        <!-- Plexus Canvas -->
+        <canvas id="plexusCanvas"></canvas>
+
+        <!-- Corner Decorations -->
+        <div class="corner corner-tl"></div>
+        <div class="corner corner-tr"></div>
+        <div class="corner corner-bl"></div>
+        <div class="corner corner-br"></div>
+
+        <!-- Side Dot Accents -->
+        <div class="dot-accent left">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot big"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <div class="dot-accent right">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot big"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="content">
+            <div class="mata-kuliah">Mata Kuliah Perilaku Organisasi</div>
+            <div class="divider-top"></div>
+            <div class="main-title">Diversity</div>
+            <div class="subtitle-line">Keberagaman dalam Organisasi</div>
+            <div class="divider-bottom"></div>
+            <div class="kelompok-box">
+                <div class="kelompok-label">Dipresentasikan oleh</div>
+                <div class="kelompok-name">Kelompok Alep Hama</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('plexusCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 1280;
+        canvas.height = 720;
+
+        // Plexus Settings
+        const config = {
+            particleCount: 90,
+            maxDistance: 160,
+            particleSpeed: 0.4,
+            particleRadius: 2.5,
+            lineOpacityMax: 0.15,
+            dotOpacity: 0.25,
+            color: '26, 26, 26', // coal black RGB
+        };
+
+        let particles = [];
+
+        class Particle {
+            constructor() {
+                this.reset();
+            }
+
+            reset() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.vx = (Math.random() - 0.5) * config.particleSpeed;
+                this.vy = (Math.random() - 0.5) * config.particleSpeed;
+                this.radius = Math.random() * config.particleRadius + 1;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+
+                // Bounce off edges
+                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
+
+                // Keep in bounds
+                this.x = Math.max(0, Math.min(canvas.width, this.x));
+                this.y = Math.max(0, Math.min(canvas.height, this.y));
+            }
+
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${config.color}, ${config.dotOpacity})`;
+                ctx.fill();
+            }
+        }
+
+        // Initialize particles
+        function initParticles() {
+            particles = [];
+            for (let i = 0; i < config.particleCount; i++) {
+                particles.push(new Particle());
+            }
+        }
+
+        // Draw connections
+        function drawConnections() {
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+
+                    if (distance < config.maxDistance) {
+                        const opacity = (1 - distance / config.maxDistance) * config.lineOpacityMax;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(${config.color}, ${opacity})`;
+                        ctx.lineWidth = 0.8;
+                        ctx.stroke();
+                    }
+                }
+            }
+        }
+
+        // Animation loop
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Update and draw particles
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Draw connections
+            drawConnections();
+
+            requestAnimationFrame(animate);
+        }
+
+        // Start
+        initParticles();
+        animate();
+    </script>
 </body>
 </html>
