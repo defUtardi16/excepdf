@@ -1,403 +1,176 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Diversity - Perilaku Organisasi</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Diversity - Perilaku Organisasi</title>
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
 
-        body {
-            width: 1280px;
-            height: 720px;
-            overflow: hidden;
-            background-color: #FFFFF0;
-            font-family: 'Georgia', serif;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
+  body {
+    width: 1280px;
+    height: 720px;
+    overflow: hidden;
+    background-color: #FFFFF0;
+    font-family: 'Georgia', serif;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
 
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            z-index: 0;
-        }
+  canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 1280px;
+    height: 720px;
+  }
 
-        .slide-container {
-            width: 1280px;
-            height: 720px;
-            position: relative;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #FAFAF5;
-        }
+  .content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    color: #1a1a1a;
+  }
 
-        .content {
-            position: relative;
-            z-index: 10;
-            text-align: center;
-            padding: 40px 80px;
-        }
+  .label-matkul {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 4px;
+    text-transform: uppercase;
+    color: #3a3a3a;
+    margin-bottom: 18px;
+    font-family: 'Arial', sans-serif;
+  }
 
-        .mata-kuliah {
-            font-family: 'Georgia', serif;
-            font-size: 16px;
-            font-weight: 400;
-            letter-spacing: 5px;
-            text-transform: uppercase;
-            color: #555550;
-            margin-bottom: 18px;
-            opacity: 0;
-            animation: fadeUp 0.8s ease forwards 0.3s;
-        }
+  .divider-top {
+    width: 60px;
+    height: 1px;
+    background-color: #1a1a1a;
+    margin: 0 auto 24px auto;
+  }
 
-        .divider-top {
-            width: 80px;
-            height: 1.5px;
-            background: linear-gradient(to right, transparent, #1a1a1a, transparent);
-            margin: 0 auto 30px auto;
-            opacity: 0;
-            animation: fadeUp 0.8s ease forwards 0.5s;
-        }
+  .title-main {
+    font-size: 88px;
+    font-weight: 700;
+    letter-spacing: 10px;
+    text-transform: uppercase;
+    color: #111111;
+    line-height: 1;
+    font-family: 'Georgia', serif;
+  }
 
-        .main-title {
-            font-family: 'Georgia', serif;
-            font-size: 96px;
-            font-weight: 700;
-            color: #1a1a1a;
-            letter-spacing: 12px;
-            text-transform: uppercase;
-            line-height: 1;
-            margin-bottom: 8px;
-            opacity: 0;
-            animation: fadeUp 1s ease forwards 0.7s;
-            text-shadow: 2px 2px 0px rgba(0,0,0,0.05);
-        }
+  .divider-bottom {
+    width: 120px;
+    height: 2px;
+    background-color: #1a1a1a;
+    margin: 28px auto;
+  }
 
-        .subtitle-line {
-            font-family: 'Georgia', serif;
-            font-size: 18px;
-            font-style: italic;
-            color: #444440;
-            letter-spacing: 3px;
-            margin-bottom: 40px;
-            opacity: 0;
-            animation: fadeUp 0.8s ease forwards 0.9s;
-        }
+  .subtitle {
+    font-size: 14px;
+    font-weight: 400;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: #2a2a2a;
+    font-family: 'Arial', sans-serif;
+    margin-bottom: 8px;
+  }
 
-        .divider-bottom {
-            width: 200px;
-            height: 1px;
-            background: linear-gradient(to right, transparent, #1a1a1a 30%, #1a1a1a 70%, transparent);
-            margin: 0 auto 35px auto;
-            opacity: 0;
-            animation: fadeUp 0.8s ease forwards 1.1s;
-        }
-
-        .kelompok-box {
-            display: inline-block;
-            border: 1.5px solid #1a1a1a;
-            padding: 12px 40px;
-            opacity: 0;
-            animation: fadeUp 0.8s ease forwards 1.3s;
-            position: relative;
-        }
-
-        .kelompok-box::before,
-        .kelompok-box::after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            border: 1.5px solid #1a1a1a;
-        }
-
-        .kelompok-box::before {
-            top: -4px;
-            left: -4px;
-            border-right: none;
-            border-bottom: none;
-        }
-
-        .kelompok-box::after {
-            bottom: -4px;
-            right: -4px;
-            border-left: none;
-            border-top: none;
-        }
-
-        .kelompok-label {
-            font-size: 11px;
-            letter-spacing: 4px;
-            text-transform: uppercase;
-            color: #888880;
-            font-family: 'Georgia', serif;
-            margin-bottom: 4px;
-        }
-
-        .kelompok-name {
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: 6px;
-            text-transform: uppercase;
-            color: #1a1a1a;
-            font-family: 'Georgia', serif;
-        }
-
-        /* Corner decorations */
-        .corner {
-            position: absolute;
-            width: 50px;
-            height: 50px;
-            z-index: 10;
-        }
-
-        .corner-tl {
-            top: 25px;
-            left: 25px;
-            border-top: 2px solid #1a1a1a;
-            border-left: 2px solid #1a1a1a;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.5s;
-        }
-
-        .corner-tr {
-            top: 25px;
-            right: 25px;
-            border-top: 2px solid #1a1a1a;
-            border-right: 2px solid #1a1a1a;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.5s;
-        }
-
-        .corner-bl {
-            bottom: 25px;
-            left: 25px;
-            border-bottom: 2px solid #1a1a1a;
-            border-left: 2px solid #1a1a1a;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.5s;
-        }
-
-        .corner-br {
-            bottom: 25px;
-            right: 25px;
-            border-bottom: 2px solid #1a1a1a;
-            border-right: 2px solid #1a1a1a;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.5s;
-        }
-
-        /* Dot decorations */
-        .dot-accent {
-            position: absolute;
-            z-index: 10;
-            display: flex;
-            gap: 6px;
-            align-items: center;
-        }
-
-        .dot-accent.left {
-            left: 90px;
-            top: 50%;
-            transform: translateY(-50%);
-            flex-direction: column;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.6s;
-        }
-
-        .dot-accent.right {
-            right: 90px;
-            top: 50%;
-            transform: translateY(-50%);
-            flex-direction: column;
-            opacity: 0;
-            animation: fadeIn 1s ease forwards 1.6s;
-        }
-
-        .dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background-color: #1a1a1a;
-            opacity: 0.4;
-        }
-
-        .dot.big {
-            width: 6px;
-            height: 6px;
-            opacity: 0.7;
-        }
-
-        @keyframes fadeUp {
-            from {
-                opacity: 0;
-                transform: translateY(25px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-    </style>
+  .group-name {
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 2px;
+    color: #4a4a4a;
+    font-family: 'Arial', sans-serif;
+  }
+</style>
 </head>
 <body>
-    <div class="slide-container">
-        <!-- Plexus Canvas -->
-        <canvas id="plexusCanvas"></canvas>
+<canvas id="plexus"></canvas>
 
-        <!-- Corner Decorations -->
-        <div class="corner corner-tl"></div>
-        <div class="corner corner-tr"></div>
-        <div class="corner corner-bl"></div>
-        <div class="corner corner-br"></div>
+<div class="content">
+  <p class="label-matkul">Perilaku Organisasi</p>
+  <div class="divider-top"></div>
+  <h1 class="title-main">Diversity</h1>
+  <div class="divider-bottom"></div>
+  <p class="subtitle">Mata Kuliah Perilaku Organisasi</p>
+  <p class="group-name">Kelompok Alep Hama</p>
+</div>
 
-        <!-- Side Dot Accents -->
-        <div class="dot-accent left">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot big"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>
+<script>
+  const canvas = document.getElementById('plexus');
+  const ctx = canvas.getContext('2d');
+  canvas.width = 1280;
+  canvas.height = 720;
 
-        <div class="dot-accent right">
-            <div class="dot"></div>
-            <div class="dot"></div>
-            <div class="dot big"></div>
-            <div class="dot"></div>
-            <div class="dot"></div>
-        </div>
+  const NODE_COUNT = 80;
+  const MAX_DIST = 160;
+  const NODE_COLOR = 'rgba(20, 20, 20,';
+  const LINE_COLOR = 'rgba(20, 20, 20,';
 
-        <!-- Main Content -->
-        <div class="content">
-            <div class="mata-kuliah">Mata Kuliah Perilaku Organisasi</div>
-            <div class="divider-top"></div>
-            <div class="main-title">Diversity</div>
-            <div class="subtitle-line">Keberagaman dalam Organisasi</div>
-            <div class="divider-bottom"></div>
-            <div class="kelompok-box">
-                <div class="kelompok-label">Dipresentasikan oleh</div>
-                <div class="kelompok-name">Kelompok Alep Hama</div>
-            </div>
-        </div>
-    </div>
+  const nodes = [];
 
-    <script>
-        const canvas = document.getElementById('plexusCanvas');
-        const ctx = canvas.getContext('2d');
+  for (let i = 0; i < NODE_COUNT; i++) {
+    nodes.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      vx: (Math.random() - 0.5) * 0.5,
+      vy: (Math.random() - 0.5) * 0.5,
+      r: Math.random() * 2 + 1
+    });
+  }
 
-        canvas.width = 1280;
-        canvas.height = 720;
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Plexus Settings
-        const config = {
-            particleCount: 90,
-            maxDistance: 160,
-            particleSpeed: 0.4,
-            particleRadius: 2.5,
-            lineOpacityMax: 0.15,
-            dotOpacity: 0.25,
-            color: '26, 26, 26', // coal black RGB
-        };
-
-        let particles = [];
-
-        class Particle {
-            constructor() {
-                this.reset();
-            }
-
-            reset() {
-                this.x = Math.random() * canvas.width;
-                this.y = Math.random() * canvas.height;
-                this.vx = (Math.random() - 0.5) * config.particleSpeed;
-                this.vy = (Math.random() - 0.5) * config.particleSpeed;
-                this.radius = Math.random() * config.particleRadius + 1;
-            }
-
-            update() {
-                this.x += this.vx;
-                this.y += this.vy;
-
-                // Bounce off edges
-                if (this.x < 0 || this.x > canvas.width) this.vx *= -1;
-                if (this.y < 0 || this.y > canvas.height) this.vy *= -1;
-
-                // Keep in bounds
-                this.x = Math.max(0, Math.min(canvas.width, this.x));
-                this.y = Math.max(0, Math.min(canvas.height, this.y));
-            }
-
-            draw() {
-                ctx.beginPath();
-                ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
-                ctx.fillStyle = `rgba(${config.color}, ${config.dotOpacity})`;
-                ctx.fill();
-            }
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < MAX_DIST) {
+          const alpha = (1 - dist / MAX_DIST) * 0.35;
+          ctx.beginPath();
+          ctx.moveTo(nodes[i].x, nodes[i].y);
+          ctx.lineTo(nodes[j].x, nodes[j].y);
+          ctx.strokeStyle = LINE_COLOR + alpha + ')';
+          ctx.lineWidth = 0.8;
+          ctx.stroke();
         }
+      }
+    }
 
-        // Initialize particles
-        function initParticles() {
-            particles = [];
-            for (let i = 0; i < config.particleCount; i++) {
-                particles.push(new Particle());
-            }
-        }
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = NODE_COLOR + '0.6)';
+      ctx.fill();
+    }
+  }
 
-        // Draw connections
-        function drawConnections() {
-            for (let i = 0; i < particles.length; i++) {
-                for (let j = i + 1; j < particles.length; j++) {
-                    const dx = particles[i].x - particles[j].x;
-                    const dy = particles[i].y - particles[j].y;
-                    const distance = Math.sqrt(dx * dx + dy * dy);
+  function update() {
+    for (let i = 0; i < nodes.length; i++) {
+      const n = nodes[i];
+      n.x += n.vx;
+      n.y += n.vy;
+      if (n.x < 0 || n.x > canvas.width) n.vx *= -1;
+      if (n.y < 0 || n.y > canvas.height) n.vy *= -1;
+    }
+  }
 
-                    if (distance < config.maxDistance) {
-                        const opacity = (1 - distance / config.maxDistance) * config.lineOpacityMax;
-                        ctx.beginPath();
-                        ctx.moveTo(particles[i].x, particles[i].y);
-                        ctx.lineTo(particles[j].x, particles[j].y);
-                        ctx.strokeStyle = `rgba(${config.color}, ${opacity})`;
-                        ctx.lineWidth = 0.8;
-                        ctx.stroke();
-                    }
-                }
-            }
-        }
+  function loop() {
+    update();
+    draw();
+    requestAnimationFrame(loop);
+  }
 
-        // Animation loop
-        function animate() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Update and draw particles
-            particles.forEach(p => {
-                p.update();
-                p.draw();
-            });
-
-            // Draw connections
-            drawConnections();
-
-            requestAnimationFrame(animate);
-        }
-
-        // Start
-        initParticles();
-        animate();
-    </script>
+  loop();
+</script>
 </body>
 </html>
