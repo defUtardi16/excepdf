@@ -3,797 +3,189 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>PDF Converter by Rad Strix</title>
+<title>PDF Converter | Rad Strix</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.6.0/mammoth.browser.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--glass-bg:rgba(255,255,255,0.12);--glass-border:rgba(255,255,255,0.18);--glass-shadow:0 8px 32px rgba(0,0,0,0.37);--text-primary:#f0f0f0;--text-secondary:#a0a0a0;--accent:#c0c0c0;--surface-dark:#1a1a1a;--surface-mid:#2a2a2a;--radius:16px;--transition:all 0.4s cubic-bezier(0.25,0.46,0.45,0.94)}
-@font-face{font-display:swap}
-body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Segoe UI',Roboto,sans-serif;background:#0d0d0d;color:var(--text-primary);min-height:100vh;overflow-x:hidden;position:relative}
-#plexusCanvas{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none}
-.splash-screen{position:fixed;top:0;left:0;width:100%;height:100%;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0d0d0d;transition:opacity 0.8s ease,visibility 0.8s ease}
-.splash-screen.hidden{opacity:0;visibility:hidden;pointer-events:none}
-.splash-screen canvas{position:absolute;top:0;left:0;width:100%;height:100%;z-index:0}
-.splash-title{font-size:clamp(28px,5vw,48px);font-weight:700;letter-spacing:4px;color:var(--text-primary);z-index:1;opacity:0;animation:fadeUp 1s ease 0.3s forwards}
-.splash-subtitle{font-size:clamp(12px,2vw,16px);font-weight:300;letter-spacing:8px;color:var(--text-secondary);margin-top:12px;z-index:1;opacity:0;animation:fadeUp 1s ease 0.6s forwards;text-transform:uppercase}
-.splash-loader{width:120px;height:2px;background:var(--surface-mid);border-radius:2px;margin-top:40px;overflow:hidden;z-index:1;opacity:0;animation:fadeUp 1s ease 0.9s forwards}
-.splash-loader-bar{width:0;height:100%;background:linear-gradient(90deg,var(--text-secondary),var(--text-primary));border-radius:2px;animation:load 2s ease 1s forwards}
-@keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-@keyframes load{to{width:100%}}
-.app-container{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:40px 20px;opacity:0;transition:opacity 0.6s ease}
-.app-container.visible{opacity:1}
-.app-header{text-align:center;margin-bottom:48px}
-.app-header h1{font-size:clamp(24px,4vw,36px);font-weight:600;letter-spacing:2px;color:var(--text-primary)}
-.app-header p{font-size:13px;letter-spacing:4px;color:var(--text-secondary);margin-top:8px;text-transform:uppercase;font-weight:300}
-.main-card{width:100%;max-width:800px;background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:var(--radius);box-shadow:var(--glass-shadow);padding:40px;transition:var(--transition)}
-.main-card:hover{border-color:rgba(255,255,255,0.25);box-shadow:0 12px 48px rgba(0,0,0,0.5)}
-.drop-zone{border:2px dashed rgba(255,255,255,0.15);border-radius:12px;padding:60px 40px;text-align:center;cursor:pointer;transition:var(--transition);position:relative;overflow:hidden}
-.drop-zone:hover,.drop-zone.dragover{border-color:rgba(255,255,255,0.4);background:rgba(255,255,255,0.04)}
-.drop-zone-icon{width:48px;height:48px;margin:0 auto 20px;opacity:0.5}
-.drop-zone-icon svg{width:100%;height:100%;stroke:var(--text-secondary);stroke-width:1.5;fill:none}
-.drop-zone h3{font-size:18px;font-weight:500;margin-bottom:8px;color:var(--text-primary)}
-.drop-zone p{font-size:13px;color:var(--text-secondary);font-weight:300}
-.drop-zone input{display:none}
-.file-badge{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;letter-spacing:1px;background:rgba(255,255,255,0.08);color:var(--text-secondary);margin:2px;font-weight:400}
-.file-info{margin-top:32px;display:none}
-.file-info.active{display:block}
-.file-info-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;background:rgba(255,255,255,0.06);border-radius:12px;margin-bottom:20px}
-.file-info-name{font-size:14px;font-weight:500;color:var(--text-primary)}
-.file-info-size{font-size:12px;color:var(--text-secondary);font-weight:300}
-.file-info-remove{background:none;border:none;color:var(--text-secondary);cursor:pointer;font-size:18px;padding:4px 8px;border-radius:6px;transition:var(--transition)}
-.file-info-remove:hover{color:var(--text-primary);background:rgba(255,255,255,0.08)}
-.excel-options{margin-top:24px;display:none}
-.excel-options.active{display:block}
-.option-group{margin-bottom:20px}
-.option-label{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--text-secondary);margin-bottom:10px;font-weight:400;display:block}
-.sheet-tabs{display:flex;gap:8px;flex-wrap:wrap}
-.sheet-tab{padding:8px 16px;border-radius:8px;background:rgba(255,255,255,0.06);border:1px solid transparent;color:var(--text-secondary);font-size:13px;cursor:pointer;transition:var(--transition);font-weight:400}
-.sheet-tab:hover{background:rgba(255,255,255,0.1)}
-.sheet-tab.active{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.25);color:var(--text-primary)}
-.range-display{padding:16px 20px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.08)}
-.range-item{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
-.range-item:last-child{border-bottom:none}
-.range-label{font-size:13px;color:var(--text-secondary);font-weight:300}
-.range-value{font-size:13px;color:var(--text-primary);font-family:'SF Mono',SFMono-Regular,Menlo,monospace;font-weight:500}
-.split-option{margin-top:16px;display:flex;align-items:center;gap:12px}
-.toggle-switch{position:relative;width:44px;height:24px;flex-shrink:0}
-.toggle-switch input{opacity:0;width:0;height:0}
-.toggle-slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:rgba(255,255,255,0.1);border-radius:12px;transition:var(--transition)}
-.toggle-slider:before{content:'';position:absolute;height:18px;width:18px;left:3px;bottom:3px;background:var(--text-secondary);border-radius:50%;transition:var(--transition)}
-.toggle-switch input:checked+.toggle-slider{background:rgba(255,255,255,0.25)}
-.toggle-switch input:checked+.toggle-slider:before{transform:translateX(20px);background:var(--text-primary)}
-.toggle-text{font-size:13px;color:var(--text-secondary);font-weight:300}
-.split-config{margin-top:12px;display:none;padding:12px 16px;background:rgba(255,255,255,0.04);border-radius:8px}
-.split-config.active{display:block}
-.split-input-group{display:flex;align-items:center;gap:12px;margin-top:8px}
-.split-input{width:80px;padding:8px 12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.12);border-radius:8px;color:var(--text-primary);font-size:13px;text-align:center;outline:none;transition:var(--transition)}
-.split-input:focus{border-color:rgba(255,255,255,0.3)}
-.split-input-label{font-size:12px;color:var(--text-secondary);font-weight:300}
-.preview-section{margin-top:24px;display:none}
-.preview-section.active{display:block}
-.preview-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
-.preview-title{font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--text-secondary);font-weight:400}
-.preview-scroll{overflow:auto;max-height:400px;border-radius:12px;border:1px solid rgba(255,255,255,0.08)}
-.preview-scroll::-webkit-scrollbar{width:6px;height:6px}
-.preview-scroll::-webkit-scrollbar-track{background:transparent}
-.preview-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
-.preview-table{width:100%;border-collapse:collapse;font-size:12px}
-.preview-table th{padding:10px 14px;background:rgba(255,255,255,0.08);text-align:left;font-weight:500;color:var(--text-secondary);position:sticky;top:0;z-index:1;white-space:nowrap;letter-spacing:0.5px;font-size:11px;text-transform:uppercase}
-.preview-table td{padding:8px 14px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text-primary);white-space:nowrap;font-weight:300}
-.preview-table tr:hover td{background:rgba(255,255,255,0.03)}
-.preview-table .region-separator td{background:rgba(255,255,255,0.02);text-align:center;color:var(--text-secondary);font-style:italic;padding:6px;font-size:11px;letter-spacing:1px}
-.region-badge{display:inline-block;padding:2px 10px;border-radius:10px;font-size:10px;background:rgba(255,255,255,0.08);color:var(--text-secondary);margin-left:8px;letter-spacing:0.5px}
-.image-preview{margin-top:16px;text-align:center}
-.image-preview img{max-width:100%;max-height:300px;border-radius:8px;border:1px solid rgba(255,255,255,0.1)}
-.docx-preview{margin-top:16px;padding:20px;background:rgba(255,255,255,0.04);border-radius:12px;max-height:400px;overflow-y:auto;font-size:13px;line-height:1.8;color:var(--text-secondary);font-weight:300}
-.docx-preview::-webkit-scrollbar{width:6px}
-.docx-preview::-webkit-scrollbar-track{background:transparent}
-.docx-preview::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:3px}
-.convert-btn{width:100%;margin-top:32px;padding:16px;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.15);border-radius:12px;color:var(--text-primary);font-size:15px;font-weight:500;cursor:pointer;transition:var(--transition);letter-spacing:1px;display:none;position:relative;overflow:hidden}
-.convert-btn.active{display:block}
-.convert-btn:hover{background:rgba(255,255,255,0.18);border-color:rgba(255,255,255,0.3);transform:translateY(-1px);box-shadow:0 6px 24px rgba(0,0,0,0.3)}
-.convert-btn:active{transform:translateY(0)}
-.convert-btn.loading{pointer-events:none;color:transparent}
-.convert-btn.loading::after{content:'';position:absolute;top:50%;left:50%;width:20px;height:20px;margin:-10px 0 0 -10px;border:2px solid transparent;border-top-color:var(--text-primary);border-radius:50%;animation:spin 0.8s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.status-bar{margin-top:16px;text-align:center;font-size:12px;color:var(--text-secondary);font-weight:300;min-height:20px;letter-spacing:0.5px}
-.watermark-config{margin-top:20px;padding:16px 20px;background:rgba(255,255,255,0.04);border-radius:12px;border:1px solid rgba(255,255,255,0.06)}
-.watermark-config .option-label{margin-bottom:8px}
-.watermark-input{width:100%;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text-primary);font-size:13px;outline:none;transition:var(--transition);font-weight:300}
-.watermark-input:focus{border-color:rgba(255,255,255,0.25)}
-.orientation-group{display:flex;gap:8px;margin-top:8px}
-.orientation-btn{flex:1;padding:10px;text-align:center;background:rgba(255,255,255,0.06);border:1px solid transparent;border-radius:8px;color:var(--text-secondary);font-size:12px;cursor:pointer;transition:var(--transition);font-weight:400;letter-spacing:0.5px}
-.orientation-btn:hover{background:rgba(255,255,255,0.1)}
-.orientation-btn.active{background:rgba(255,255,255,0.15);border-color:rgba(255,255,255,0.25);color:var(--text-primary)}
-.page-size-select{width:100%;padding:10px 14px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text-primary);font-size:13px;outline:none;transition:var(--transition);appearance:none;cursor:pointer;font-weight:300}
-.page-size-select option{background:#1a1a1a;color:var(--text-primary)}
-.page-size-select:focus{border-color:rgba(255,255,255,0.25)}
-.footer{margin-top:auto;padding:40px 0 20px;text-align:center}
-.footer p{font-size:11px;color:rgba(255,255,255,0.2);letter-spacing:2px;font-weight:300}
-@media(max-width:768px){
-.main-card{padding:24px 16px}
-.drop-zone{padding:40px 20px}
-.app-container{padding:20px 12px}
-.file-info-header{flex-direction:column;gap:8px;text-align:center}
-.orientation-group{flex-direction:column}
-.split-input-group{flex-direction:column;align-items:flex-start}
-}
-.multi-region-info{margin-top:12px;padding:12px 16px;background:rgba(255,255,255,0.04);border-radius:8px;border-left:2px solid rgba(255,255,255,0.15)}
-.multi-region-info p{font-size:12px;color:var(--text-secondary);font-weight:300;line-height:1.6}
-.region-list{margin-top:8px;display:flex;flex-direction:column;gap:4px}
-.region-entry{display:flex;align-items:center;justify-content:space-between;padding:6px 10px;background:rgba(255,255,255,0.04);border-radius:6px}
-.region-name{font-size:12px;color:var(--text-primary);font-weight:400}
-.region-range{font-size:11px;color:var(--text-secondary);font-family:'SF Mono',monospace}
-.select-wrapper{position:relative}
-.select-wrapper::after{content:'';position:absolute;right:14px;top:50%;width:6px;height:6px;border-right:1.5px solid var(--text-secondary);border-bottom:1.5px solid var(--text-secondary);transform:translateY(-60%) rotate(45deg);pointer-events:none}
+:root{--glass-bg:rgba(255,255,255,0.08);--glass-border:rgba(255,255,255,0.12);--glass-shadow:0 8px 32px rgba(0,0,0,0.3);--text-primary:rgba(255,255,255,0.95);--text-secondary:rgba(255,255,255,0.6);--accent:#6366f1;--accent-glow:rgba(99,102,241,0.4)}
+body{font-family:'Inter',sans-serif;background:linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 50%,#0f0f1a 100%);min-height:100vh;overflow-x:hidden;color:var(--text-primary)}
+#splash{position:fixed;inset:0;z-index:10000;display:flex;flex-direction:column;align-items:center;justify-content:center;background:linear-gradient(135deg,#0a0a0f 0%,#1a1a2e 50%,#0f0f1a 100%);transition:opacity 0.8s ease,visibility 0.8s ease}
+#splash.hidden{opacity:0;visibility:hidden;pointer-events:none}
+#splash h1{font-size:clamp(2rem,5vw,3.5rem);font-weight:700;background:linear-gradient(135deg,#fff 0%,#6366f1 50%,#8b5cf6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:0.5rem;letter-spacing:-0.02em}
+#splash p{font-size:clamp(0.875rem,2vw,1rem);color:var(--text-secondary);font-weight:300;letter-spacing:0.1em}
+#splash .loader{width:200px;height:2px;background:rgba(255,255,255,0.1);border-radius:2px;margin-top:3rem;overflow:hidden}
+#splash .loader::after{content:'';display:block;width:40%;height:100%;background:linear-gradient(90deg,transparent,var(--accent),transparent);animation:loading 1.5s ease-in-out infinite}
+@keyframes loading{0%{transform:translateX(-100%)}100%{transform:translateX(350%)}}
+#plexus-canvas{position:fixed;inset:0;z-index:0;pointer-events:none}
+.app-container{position:relative;z-index:1;min-height:100vh;padding:2rem;display:flex;flex-direction:column;align-items:center}
+.header{text-align:center;margin-bottom:3rem}
+.header h1{font-size:clamp(1.5rem,4vw,2.5rem);font-weight:600;background:linear-gradient(135deg,#fff 0%,rgba(255,255,255,0.8) 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;letter-spacing:-0.02em}
+.header p{color:var(--text-secondary);font-size:0.875rem;margin-top:0.5rem;font-weight:300}
+.glass-card{background:var(--glass-bg);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid var(--glass-border);border-radius:24px;box-shadow:var(--glass-shadow);padding:2rem;width:100%;max-width:900px}
+.upload-zone{border:2px dashed rgba(255,255,255,0.2);border-radius:16px;padding:3rem 2rem;text-align:center;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
+.upload-zone:hover,.upload-zone.dragover{border-color:var(--accent);background:rgba(99,102,241,0.05)}
+.upload-zone::before{content:'';position:absolute;inset:0;background:radial-gradient(circle at center,rgba(99,102,241,0.1) 0%,transparent 70%);opacity:0;transition:opacity 0.3s ease}
+.upload-zone:hover::before{opacity:1}
+.upload-icon{width:64px;height:64px;margin:0 auto 1.5rem;border-radius:16px;background:linear-gradient(135deg,rgba(99,102,241,0.2) 0%,rgba(139,92,246,0.2) 100%);display:flex;align-items:center;justify-content:center}
+.upload-icon svg{width:32px;height:32px;stroke:var(--accent)}
+.upload-zone h3{font-size:1.125rem;font-weight:500;margin-bottom:0.5rem}
+.upload-zone p{color:var(--text-secondary);font-size:0.875rem}
+.supported-formats{display:flex;flex-wrap:wrap;gap:0.5rem;justify-content:center;margin-top:1rem}
+.format-tag{padding:0.25rem 0.75rem;background:rgba(255,255,255,0.05);border-radius:20px;font-size:0.75rem;color:var(--text-secondary)}
+#file-input{display:none}
+.file-preview{margin-top:2rem;display:none}
+.file-preview.active{display:block}
+.file-info{display:flex;align-items:center;gap:1rem;padding:1rem;background:rgba(255,255,255,0.03);border-radius:12px;margin-bottom:1.5rem}
+.file-icon{width:48px;height:48px;border-radius:12px;background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.file-icon svg{width:24px;height:24px;stroke:#fff}
+.file-details{flex:1;min-width:0}
+.file-details h4{font-size:0.875rem;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.file-details p{font-size:0.75rem;color:var(--text-secondary);margin-top:0.25rem}
+.remove-file{width:36px;height:36px;border-radius:10px;border:none;background:rgba(239,68,68,0.1);color:#ef4444;cursor:pointer;transition:all 0.2s ease;display:flex;align-items:center;justify-content:center}
+.remove-file:hover{background:rgba(239,68,68,0.2)}
+.section-title{font-size:0.875rem;font-weight:500;margin-bottom:1rem;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.05em}
+.sheets-container{display:grid;gap:0.5rem;margin-bottom:1.5rem}
+.sheet-item{display:flex;align-items:center;gap:0.75rem;padding:0.75rem 1rem;background:rgba(255,255,255,0.03);border-radius:10px;cursor:pointer;transition:all 0.2s ease}
+.sheet-item:hover{background:rgba(255,255,255,0.06)}
+.sheet-item.selected{background:rgba(99,102,241,0.15);border:1px solid rgba(99,102,241,0.3)}
+.sheet-checkbox{width:18px;height:18px;border-radius:5px;border:2px solid rgba(255,255,255,0.2);display:flex;align-items:center;justify-content:center;transition:all 0.2s ease}
+.sheet-item.selected .sheet-checkbox{background:var(--accent);border-color:var(--accent)}
+.sheet-checkbox svg{width:12px;height:12px;stroke:#fff;opacity:0;transition:opacity 0.2s ease}
+.sheet-item.selected .sheet-checkbox svg{opacity:1}
+.sheet-name{font-size:0.875rem;flex:1}
+.sheet-cells{font-size:0.75rem;color:var(--text-secondary)}
+.range-detection{padding:1rem;background:rgba(99,102,241,0.05);border-radius:12px;border:1px solid rgba(99,102,241,0.1);margin-bottom:1.5rem}
+.range-info{display:flex;flex-wrap:wrap;gap:1rem;font-size:0.875rem}
+.range-item{display:flex;align-items:center;gap:0.5rem}
+.range-label{color:var(--text-secondary)}
+.range-value{font-weight:500;color:var(--accent)}
+.options-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.option-group{padding:1rem;background:rgba(255,255,255,0.02);border-radius:12px}
+.option-group label{display:block;font-size:0.75rem;color:var(--text-secondary);margin-bottom:0.5rem;text-transform:uppercase;letter-spacing:0.05em}
+.option-group select,.option-group input{width:100%;padding:0.75rem;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);border-radius:8px;color:var(--text-primary);font-size:0.875rem;outline:none;transition:border-color 0.2s ease}
+.option-group select:focus,.option-group input:focus{border-color:var(--accent)}
+.option-group select option{background:#1a1a2e}
+.toggle-option{display:flex;align-items:center;justify-content:space-between;padding:0.75rem 1rem;background:rgba(255,255,255,0.02);border-radius:10px}
+.toggle-option span{font-size:0.875rem}
+.toggle{width:44px;height:24px;background:rgba(255,255,255,0.1);border-radius:12px;position:relative;cursor:pointer;transition:background 0.2s ease}
+.toggle.active{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:18px;height:18px;background:#fff;border-radius:50%;top:3px;left:3px;transition:transform 0.2s ease}
+.toggle.active::after{transform:translateX(20px)}
+.convert-btn{width:100%;padding:1rem;background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);border:none;border-radius:12px;color:#fff;font-size:1rem;font-weight:500;cursor:pointer;transition:all 0.3s ease;position:relative;overflow:hidden}
+.convert-btn:hover{transform:translateY(-2px);box-shadow:0 10px 40px var(--accent-glow)}
+.convert-btn:disabled{opacity:0.5;cursor:not-allowed;transform:none}
+.convert-btn::before{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.2),transparent);transform:translateX(-100%);transition:transform 0.5s ease}
+.convert-btn:hover::before{transform:translateX(100%)}
+.progress-container{margin-top:1.5rem;display:none}
+.progress-container.active{display:block}
+.progress-bar{height:4px;background:rgba(255,255,255,0.1);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),#8b5cf6);width:0%;transition:width 0.3s ease}
+.progress-text{display:flex;justify-content:space-between;margin-top:0.75rem;font-size:0.75rem;color:var(--text-secondary)}
+.preview-modal{position:fixed;inset:0;z-index:1000;display:none;align-items:center;justify-content:center;padding:2rem;background:rgba(0,0,0,0.8);backdrop-filter:blur(10px)}
+.preview-modal.active{display:flex}
+.preview-content{background:linear-gradient(135deg,#1a1a2e 0%,#0f0f1a 100%);border-radius:24px;border:1px solid var(--glass-border);width:100%;max-width:1200px;max-height:90vh;display:flex;flex-direction:column;overflow:hidden}
+.preview-header{display:flex;align-items:center;justify-content:space-between;padding:1.5rem;border-bottom:1px solid rgba(255,255,255,0.05)}
+.preview-header h3{font-size:1rem;font-weight:500}
+.close-preview{width:36px;height:36px;border-radius:10px;border:none;background:rgba(255,255,255,0.05);color:var(--text-primary);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background 0.2s ease}
+.close-preview:hover{background:rgba(255,255,255,0.1)}
+.preview-body{flex:1;overflow:auto;padding:1.5rem}
+.preview-canvas{background:#fff;border-radius:8px;margin:0 auto;display:block;max-width:100%}
+.preview-footer{display:flex;gap:1rem;padding:1.5rem;border-top:1px solid rgba(255,255,255,0.05)}
+.preview-footer button{flex:1;padding:0.875rem;border-radius:10px;font-size:0.875rem;font-weight:500;cursor:pointer;transition:all 0.2s ease}
+.btn-secondary{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text-primary)}
+.btn-secondary:hover{background:rgba(255,255,255,0.1)}
+.btn-primary{background:linear-gradient(135deg,var(--accent) 0%,#8b5cf6 100%);border:none;color:#fff}
+.btn-primary:hover{box-shadow:0 5px 20px var(--accent-glow)}
+#excel-render{position:absolute;left:-9999px;top:0}
+.split-info{margin-top:1rem;padding:0.75rem;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:8px;font-size:0.813rem;color:#fbbf24}
+.watermark-preview{text-align:center;padding:1rem;background:rgba(255,255,255,0.02);border-radius:8px;margin-top:1rem}
+.watermark-preview span{font-size:0.75rem;color:var(--text-secondary);font-style:italic}
+@media(max-width:768px){.app-container{padding:1rem}.glass-card{padding:1.5rem;border-radius:20px}.upload-zone{padding:2rem 1rem}.options-grid{grid-template-columns:1fr}.preview-modal{padding:1rem}.preview-content{border-radius:16px}}
 </style>
 </head>
 <body>
-<canvas id="plexusCanvas"></canvas>
-<div class="splash-screen" id="splash">
-<canvas id="splashPlexus"></canvas>
-<div class="splash-title">PDF Converter</div>
-<div class="splash-subtitle">by Rad Strix</div>
-<div class="splash-loader"><div class="splash-loader-bar"></div></div>
+<div id="splash"><canvas id="splash-plexus"></canvas><h1>PDF Converter</h1><p>by Rad Strix</p><div class="loader"></div></div>
+<canvas id="plexus-canvas"></canvas>
+<div class="app-container">
+<header class="header"><h1>PDF Converter</h1><p>Professional document conversion with intelligent detection</p></header>
+<main class="glass-card">
+<div class="upload-zone" id="upload-zone">
+<div class="upload-icon"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg></div>
+<h3>Drop your file here</h3>
+<p>or click to browse</p>
+<div class="supported-formats"><span class="format-tag">XLSX</span><span class="format-tag">XLS</span><span class="format-tag">DOCX</span><span class="format-tag">PNG</span><span class="format-tag">JPEG</span><span class="format-tag">CSV</span></div>
 </div>
-<div class="app-container" id="app">
-<header class="app-header">
-<h1>PDF Converter</h1>
-<p>by Rad Strix</p>
-</header>
-<div class="main-card">
-<div class="drop-zone" id="dropZone">
-<div class="drop-zone-icon"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg></div>
-<h3>Drop file here or click to browse</h3>
-<p style="margin-top:12px">
-<span class="file-badge">XLSX</span>
-<span class="file-badge">XLS</span>
-<span class="file-badge">CSV</span>
-<span class="file-badge">DOCX</span>
-<span class="file-badge">PNG</span>
-<span class="file-badge">JPEG</span>
-<span class="file-badge">SVG</span>
-<span class="file-badge">WEBP</span>
-</p>
-<input type="file" id="fileInput" accept=".xlsx,.xls,.csv,.docx,.png,.jpg,.jpeg,.svg,.webp,.bmp,.gif">
+<input type="file" id="file-input" accept=".xlsx,.xls,.csv,.docx,.doc,.png,.jpg,.jpeg,.gif,.webp">
+<div class="file-preview" id="file-preview">
+<div class="file-info"><div class="file-icon"><svg fill="none" viewBox="0 0 24 24" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m2.25 0H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/></svg></div><div class="file-details"><h4 id="file-name">document.xlsx</h4><p id="file-size">2.4 MB</p></div><button class="remove-file" id="remove-file"><svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div>
+<div id="excel-options" style="display:none">
+<p class="section-title">Sheets</p>
+<div class="sheets-container" id="sheets-container"></div>
+<div class="range-detection" id="range-detection"><p class="section-title" style="margin-bottom:0.75rem">Auto-detected Range</p><div class="range-info"><div class="range-item"><span class="range-label">Active Area:</span><span class="range-value" id="active-range">A1:Z100</span></div><div class="range-item"><span class="range-label">Rows:</span><span class="range-value" id="row-count">100</span></div><div class="range-item"><span class="range-label">Columns:</span><span class="range-value" id="col-count">26</span></div></div><div class="split-info" id="split-info" style="display:none">Content will be split into <strong id="split-count">2</strong> pages for optimal layout</div></div>
 </div>
-<div class="file-info" id="fileInfo">
-<div class="file-info-header">
-<div>
-<div class="file-info-name" id="fileName">-</div>
-<div class="file-info-size" id="fileSize">-</div>
+<div class="options-grid">
+<div class="option-group"><label>Page Size</label><select id="page-size"><option value="a4">A4</option><option value="letter">Letter</option><option value="legal">Legal</option><option value="a3">A3</option></select></div>
+<div class="option-group"><label>Orientation</label><select id="orientation"><option value="portrait">Portrait</option><option value="landscape">Landscape</option></select></div>
+<div class="option-group"><label>Quality</label><select id="quality"><option value="high">High (300 DPI)</option><option value="medium">Medium (150 DPI)</option><option value="web">Web (72 DPI)</option></select></div>
+<div class="option-group"><label>Max Width (columns)</label><input type="number" id="max-cols" value="15" min="5" max="50"></div>
 </div>
-<button class="file-info-remove" id="removeFile" title="Remove">&times;</button>
+<div class="toggle-option" style="margin-bottom:1rem"><span>Include Watermark</span><div class="toggle active" id="watermark-toggle"></div></div>
+<div class="watermark-preview" id="watermark-preview"><span>Watermark: "rad strix" - centered at bottom</span></div>
+<button class="convert-btn" id="convert-btn" disabled>Convert to PDF</button>
+<div class="progress-container" id="progress-container"><div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div><div class="progress-text"><span id="progress-status">Processing...</span><span id="progress-percent">0%</span></div></div>
 </div>
+</main>
 </div>
-<div class="excel-options" id="excelOptions">
-<div class="option-group">
-<span class="option-label">Sheets</span>
-<div class="sheet-tabs" id="sheetTabs"></div>
+<div class="preview-modal" id="preview-modal">
+<div class="preview-content"><div class="preview-header"><h3>Preview</h3><button class="close-preview" id="close-preview"><svg width="20" height="20" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button></div><div class="preview-body"><canvas class="preview-canvas" id="preview-canvas"></canvas></div><div class="preview-footer"><button class="btn-secondary" id="cancel-download">Cancel</button><button class="btn-primary" id="confirm-download">Download PDF</button></div></div>
 </div>
-<div class="option-group">
-<span class="option-label">Detected Active Regions</span>
-<div class="range-display" id="rangeDisplay"></div>
-<div class="multi-region-info" id="multiRegionInfo" style="display:none">
-<p>Multiple regions detected. Each region will be rendered as a separate section in the PDF.</p>
-<div class="region-list" id="regionList"></div>
-</div>
-</div>
-<div class="option-group">
-<div class="split-option">
-<label class="toggle-switch"><input type="checkbox" id="splitToggle"><span class="toggle-slider"></span></label>
-<span class="toggle-text">Split wide content into multiple pages</span>
-</div>
-<div class="split-config" id="splitConfig">
-<span class="split-input-label">Maximum columns per page</span>
-<div class="split-input-group">
-<input type="number" class="split-input" id="maxColsInput" value="8" min="1" max="100">
-<span class="split-input-label">columns</span>
-</div>
-</div>
-</div>
-</div>
-<div class="option-group" style="margin-top:20px">
-<span class="option-label">Page Orientation</span>
-<div class="orientation-group">
-<div class="orientation-btn active" data-orient="p">Portrait</div>
-<div class="orientation-btn" data-orient="l">Landscape</div>
-<div class="orientation-btn" data-orient="auto">Auto Detect</div>
-</div>
-</div>
-<div class="option-group" style="margin-top:16px">
-<span class="option-label">Page Size</span>
-<div class="select-wrapper">
-<select class="page-size-select" id="pageSize">
-<option value="a4">A4 (210 x 297 mm)</option>
-<option value="letter">Letter (216 x 279 mm)</option>
-<option value="legal">Legal (216 x 356 mm)</option>
-<option value="a3">A3 (297 x 420 mm)</option>
-</select>
-</div>
-</div>
-<div class="watermark-config">
-<span class="option-label">Watermark Text</span>
-<input type="text" class="watermark-input" id="watermarkInput" value="Rad Strix" placeholder="Enter watermark text">
-</div>
-</div>
-<div class="preview-section" id="previewSection">
-<div class="preview-header">
-<span class="preview-title">Data Preview</span>
-</div>
-<div class="preview-scroll" id="previewScroll"></div>
-</div>
-<button class="convert-btn" id="convertBtn">Convert to PDF</button>
-<div class="status-bar" id="statusBar"></div>
-</div>
-<footer class="footer"><p>Rad Strix</p></footer>
-</div>
+<div id="excel-render"></div>
 <script>
-(function(){
-/* ===== PLEXUS ENGINE ===== */
-class PlexusEngine{
-constructor(canvas,opts={}){
-this.canvas=canvas;this.ctx=canvas.getContext('2d');
-this.particles=[];this.mouse={x:-9999,y:-9999,vx:0,vy:0};
-this.prevMouse={x:-9999,y:-9999};
-this.opts=Object.assign({count:80,maxDist:150,particleColor:'rgba(255,255,255,0.25)',lineColor:'rgba(255,255,255,0.06)',speed:0.3,mouseRadius:200,mouseInfluence:0.015},opts);
-this.resize();this.init();this.animate();
-window.addEventListener('resize',()=>this.resize());
-const target=canvas.parentElement||document;
-target.addEventListener('mousemove',e=>{
-const r=canvas.getBoundingClientRect();
-this.prevMouse.x=this.mouse.x;this.prevMouse.y=this.mouse.y;
-this.mouse.x=e.clientX-r.left;this.mouse.y=e.clientY-r.top;
-this.mouse.vx=(this.mouse.x-this.prevMouse.x)*0.5;
-this.mouse.vy=(this.mouse.y-this.prevMouse.y)*0.5;
-});
-target.addEventListener('mouseleave',()=>{this.mouse.x=-9999;this.mouse.y=-9999});
-target.addEventListener('touchmove',e=>{
-const t=e.touches[0],r=canvas.getBoundingClientRect();
-this.prevMouse.x=this.mouse.x;this.prevMouse.y=this.mouse.y;
-this.mouse.x=t.clientX-r.left;this.mouse.y=t.clientY-r.top;
-},{passive:true});
-}
-resize(){
-const dpr=Math.min(window.devicePixelRatio||1,2);
-this.w=this.canvas.parentElement?this.canvas.parentElement.offsetWidth:window.innerWidth;
-this.h=this.canvas.parentElement?this.canvas.parentElement.offsetHeight:window.innerHeight;
-this.canvas.width=this.w*dpr;this.canvas.height=this.h*dpr;
-this.canvas.style.width=this.w+'px';this.canvas.style.height=this.h+'px';
-this.ctx.setTransform(dpr,0,0,dpr,0,0);
-const density=Math.min(this.w*this.h/12000,this.opts.count);
-while(this.particles.length<density)this.particles.push(this.createParticle());
-while(this.particles.length>density)this.particles.pop();
-}
-createParticle(){return{x:Math.random()*this.w,y:Math.random()*this.h,vx:(Math.random()-0.5)*this.opts.speed,vy:(Math.random()-0.5)*this.opts.speed,targetVx:0,targetVy:0}}
-init(){for(let i=0;i<this.opts.count;i++)this.particles.push(this.createParticle())}
-animate(){
-this.ctx.clearRect(0,0,this.w,this.h);
-const{maxDist,mouseRadius,mouseInfluence}=this.opts;
-for(let i=0;i<this.particles.length;i++){
-const p=this.particles[i];
-const dx=this.mouse.x-p.x,dy=this.mouse.y-p.y;
-const dist=Math.sqrt(dx*dx+dy*dy);
-if(dist<mouseRadius&&dist>0){
-const force=(1-dist/mouseRadius)*mouseInfluence;
-p.targetVx=this.mouse.vx*force*3+dx*force*0.01;
-p.targetVy=this.mouse.vy*force*3+dy*force*0.01;
-}else{p.targetVx=0;p.targetVy=0}
-p.vx+=(p.targetVx-p.vx)*0.02;p.vy+=(p.targetVy-p.vy)*0.02;
-const baseDrag=0.998;p.vx*=baseDrag;p.vy*=baseDrag;
-const spd=Math.sqrt(p.vx*p.vx+p.vy*p.vy);
-if(spd<this.opts.speed*0.5){p.vx+=(Math.random()-0.5)*0.02;p.vy+=(Math.random()-0.5)*0.02}
-p.x+=p.vx;p.y+=p.vy;
-if(p.x<0){p.x=0;p.vx*=-0.5}if(p.x>this.w){p.x=this.w;p.vx*=-0.5}
-if(p.y<0){p.y=0;p.vy*=-0.5}if(p.y>this.h){p.y=this.h;p.vy*=-0.5}
-this.ctx.beginPath();this.ctx.arc(p.x,p.y,1.2,0,Math.PI*2);
-this.ctx.fillStyle=this.opts.particleColor;this.ctx.fill();
-for(let j=i+1;j<this.particles.length;j++){
-const p2=this.particles[j];
-const ddx=p.x-p2.x,ddy=p.y-p2.y;
-const d=ddx*ddx+ddy*ddy;
-if(d<maxDist*maxDist){
-const alpha=(1-Math.sqrt(d)/maxDist)*0.15;
-this.ctx.beginPath();this.ctx.moveTo(p.x,p.y);this.ctx.lineTo(p2.x,p2.y);
-this.ctx.strokeStyle=`rgba(255,255,255,${alpha})`;this.ctx.lineWidth=0.6;this.ctx.stroke();
-}
-}
-}
-requestAnimationFrame(()=>this.animate());
-}
-}
-/* ===== SPLASH ===== */
-const splashCanvas=document.getElementById('splashPlexus');
-const splashPlexus=new PlexusEngine(splashCanvas,{count:60,lineColor:'rgba(255,255,255,0.05)',particleColor:'rgba(255,255,255,0.2)'});
-const mainCanvas=document.getElementById('plexusCanvas');
-let mainPlexus;
-setTimeout(()=>{
-document.getElementById('splash').classList.add('hidden');
-document.getElementById('app').classList.add('visible');
-mainPlexus=new PlexusEngine(mainCanvas,{count:70});
-document.addEventListener('mousemove',e=>{
-mainPlexus.mouse.x=e.clientX;mainPlexus.mouse.y=e.clientY;
-});
-},3200);
-/* ===== APP STATE ===== */
-let currentFile=null,fileType=null,workbook=null,sheetData={},activeSheet=null;
-let detectedRegions=[],orientation='p';
-const $=id=>document.getElementById(id);
-const dropZone=$('dropZone'),fileInput=$('fileInput'),fileInfo=$('fileInfo');
-const fileName=$('fileName'),fileSize=$('fileSize'),removeBtn=$('removeFile');
-const excelOpts=$('excelOptions'),sheetTabs=$('sheetTabs'),rangeDisplay=$('rangeDisplay');
-const splitToggle=$('splitToggle'),splitConfig=$('splitConfig'),maxColsInput=$('maxColsInput');
-const previewSection=$('previewSection'),previewScroll=$('previewScroll');
-const convertBtn=$('convertBtn'),statusBar=$('statusBar');
-const multiRegionInfo=$('multiRegionInfo'),regionList=$('regionList');
-/* ===== UTILITIES ===== */
-function formatSize(b){if(b<1024)return b+' B';if(b<1048576)return(b/1024).toFixed(1)+' KB';return(b/1048576).toFixed(1)+' MB'}
-function colName(n){let s='';while(n>=0){s=String.fromCharCode(65+(n%26))+s;n=Math.floor(n/26)-1}return s}
-function setStatus(t){statusBar.textContent=t}
-/* ===== EXCEL REGION DETECTION ===== */
-function detectRegions(data){
-if(!data||data.length===0)return[];
-const rows=data.length,cols=Math.max(...data.map(r=>r?r.length:0));
-if(cols===0)return[];
-// find all non-empty cells
-const occupied=new Set();
-for(let r=0;r<rows;r++){
-if(!data[r])continue;
-for(let c=0;c<data[r].length;c++){
-const v=data[r][c];
-if(v!==undefined&&v!==null&&v!=='')occupied.add(r+','+c);
-}
-}
-if(occupied.size===0)return[];
-// detect horizontal regions (gaps of empty columns)
-let colHasData=new Array(cols).fill(false);
-for(const key of occupied){const c=parseInt(key.split(',')[1]);colHasData[c]=true}
-let rowHasData=new Array(rows).fill(false);
-for(const key of occupied){const r=parseInt(key.split(',')[0]);rowHasData[r]=true}
-// find contiguous column groups
-let colGroups=[],inGroup=false,gs=-1;
-for(let c=0;c<cols;c++){
-if(colHasData[c]){if(!inGroup){gs=c;inGroup=true}}
-else{if(inGroup){colGroups.push([gs,c-1]);inGroup=false}}
-}
-if(inGroup)colGroups.push([gs,cols-1]);
-// find contiguous row groups
-let rowGroups=[],inRG=false,rgs=-1;
-for(let r=0;r<rows;r++){
-if(rowHasData[r]){if(!inRG){rgs=r;inRG=true}}
-else{if(inRG){rowGroups.push([rgs,r-1]);inRG=false}}
-}
-if(inRG)rowGroups.push([rgs,rows-1]);
-// cross row groups with col groups to find actual regions
-let regions=[];
-for(const rg of rowGroups){
-for(const cg of colGroups){
-let hasData=false;
-for(let r=rg[0];r<=rg[1]&&!hasData;r++){
-for(let c=cg[0];c<=cg[1]&&!hasData;c++){
-if(occupied.has(r+','+c))hasData=true;
-}
-}
-if(hasData){
-// tighten bounds
-let minR=rg[1],maxR=rg[0],minC=cg[1],maxC=cg[0];
-for(let r=rg[0];r<=rg[1];r++){
-for(let c=cg[0];c<=cg[1];c++){
-if(occupied.has(r+','+c)){
-minR=Math.min(minR,r);maxR=Math.max(maxR,r);
-minC=Math.min(minC,c);maxC=Math.max(maxC,c);
-}
-}
-}
-regions.push({r1:minR,r2:maxR,c1:minC,c2:maxC});
-}
-}
-}
-// merge overlapping/adjacent regions (within 1 row/col gap tolerance for small gaps)
-regions.sort((a,b)=>a.r1-b.r1||a.c1-b.c1);
-let merged=[];
-for(const reg of regions){
-let didMerge=false;
-for(let i=0;i<merged.length;i++){
-const m=merged[i];
-const rowOverlap=reg.r1<=m.r2+2&&reg.r2>=m.r1-2;
-const colOverlap=reg.c1<=m.c2+2&&reg.c2>=m.c1-2;
-if(rowOverlap&&colOverlap){
-m.r1=Math.min(m.r1,reg.r1);m.r2=Math.max(m.r2,reg.r2);
-m.c1=Math.min(m.c1,reg.c1);m.c2=Math.max(m.c2,reg.c2);
-didMerge=true;break;
-}
-}
-if(!didMerge)merged.push({...reg});
-}
-// second pass merge
-let changed=true;
-while(changed){
-changed=false;
-for(let i=0;i<merged.length;i++){
-for(let j=i+1;j<merged.length;j++){
-const a=merged[i],b=merged[j];
-const ro=a.r1<=b.r2+2&&a.r2>=b.r1-2;
-const co=a.c1<=b.c2+2&&a.c2>=b.c1-2;
-if(ro&&co){
-a.r1=Math.min(a.r1,b.r1);a.r2=Math.max(a.r2,b.r2);
-a.c1=Math.min(a.c1,b.c1);a.c2=Math.max(a.c2,b.c2);
-merged.splice(j,1);changed=true;break;
-}
-}
-if(changed)break;
-}
-}
-// now check for regions separated by significant gaps (3+ empty rows/cols)
-// split each region if internal gaps exist
-let finalRegions=[];
-for(const reg of merged){
-// check for horizontal gaps (empty column bands within region)
-let internalColGroups=[],inCG=false,cgs=-1;
-for(let c=reg.c1;c<=reg.c2;c++){
-let hasAny=false;
-for(let r=reg.r1;r<=reg.r2;r++){if(occupied.has(r+','+c)){hasAny=true;break}}
-if(hasAny){if(!inCG){cgs=c;inCG=true}}
-else{if(inCG){internalColGroups.push([cgs,c-1]);inCG=false}}
-}
-if(inCG)internalColGroups.push([cgs,reg.c2]);
-// check for vertical gaps
-let internalRowGroups=[],inRRG=false,rrgs=-1;
-for(let r=reg.r1;r<=reg.r2;r++){
-let hasAny=false;
-for(let c=reg.c1;c<=reg.c2;c++){if(occupied.has(r+','+c)){hasAny=true;break}}
-if(hasAny){if(!inRRG){rrgs=r;inRRG=true}}
-else{if(inRRG){internalRowGroups.push([rrgs,r-1]);inRRG=false}}
-}
-if(inRRG)internalRowGroups.push([rrgs,reg.r2]);
-// only split if gap >= 3 rows/cols
-let splitRowGroups=[internalRowGroups[0]];
-for(let i=1;i<internalRowGroups.length;i++){
-const prev=splitRowGroups[splitRowGroups.length-1];
-if(internalRowGroups[i][0]-prev[1]>=4){
-splitRowGroups.push(internalRowGroups[i]);
-}else{
-prev[1]=internalRowGroups[i][1];
-}
-}
-let splitColGroups=[internalColGroups[0]];
-for(let i=1;i<internalColGroups.length;i++){
-const prev=splitColGroups[splitColGroups.length-1];
-if(internalColGroups[i][0]-prev[1]>=4){
-splitColGroups.push(internalColGroups[i]);
-}else{
-prev[1]=internalColGroups[i][1];
-}
-}
-for(const rg of splitRowGroups){
-for(const cg of splitColGroups){
-let hasData=false;
-for(let r=rg[0];r<=rg[1]&&!hasData;r++){
-for(let c=cg[0];c<=cg[1]&&!hasData;c++){
-if(occupied.has(r+','+c))hasData=true;
-}
-}
-if(hasData){
-let mr=rg[1],xr=rg[0],mc=cg[1],xc=cg[0];
-for(let r=rg[0];r<=rg[1];r++){
-for(let c=cg[0];c<=cg[1];c++){
-if(occupied.has(r+','+c)){mr=Math.min(mr,r);xr=Math.max(xr,r);mc=Math.min(mc,c);xc=Math.max(xc,c)}
-}
-}
-finalRegions.push({r1:mr,r2:xr,c1:mc,c2:xc});
-}
-}
-}
-}
-finalRegions.sort((a,b)=>a.r1-b.r1||a.c1-b.c1);
-return finalRegions;
-}
-/* ===== FILE HANDLING ===== */
-dropZone.addEventListener('click',()=>fileInput.click());
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('dragover')});
-dropZone.addEventListener('dragleave',()=>dropZone.classList.remove('dragover'));
-dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('dragover');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0])});
-fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.target.files[0])});
-removeBtn.addEventListener('click',resetAll);
-function resetAll(){
-currentFile=null;fileType=null;workbook=null;sheetData={};activeSheet=null;detectedRegions=[];
-fileInfo.classList.remove('active');excelOpts.classList.remove('active');
-previewSection.classList.remove('active');convertBtn.classList.remove('active');
-dropZone.style.display='';setStatus('');fileInput.value='';
-}
-function handleFile(file){
-currentFile=file;
-const ext=file.name.split('.').pop().toLowerCase();
-fileName.textContent=file.name;
-fileSize.textContent=formatSize(file.size);
-fileInfo.classList.add('active');
-dropZone.style.display='none';
-setStatus('Processing...');
-if(['xlsx','xls','csv'].includes(ext)){
-fileType='excel';handleExcel(file);
-}else if(ext==='docx'){
-fileType='docx';handleDocx(file);
-}else if(['png','jpg','jpeg','svg','webp','bmp','gif'].includes(ext)){
-fileType='image';handleImage(file);
-}else{
-setStatus('Unsupported file type');
-}
-}
-function handleExcel(file){
-const reader=new FileReader();
-reader.onload=function(e){
-workbook=XLSX.read(e.target.result,{type:'array'});
-sheetData={};
-sheetTabs.innerHTML='';
-workbook.SheetNames.forEach((name,i)=>{
-const ws=workbook.Sheets[name];
-const json=XLSX.utils.sheet_to_json(ws,{header:1,defval:''});
-sheetData[name]=json;
-const tab=document.createElement('div');
-tab.className='sheet-tab'+(i===0?' active':'');
-tab.textContent=name;
-tab.addEventListener('click',()=>{
-document.querySelectorAll('.sheet-tab').forEach(t=>t.classList.remove('active'));
-tab.classList.add('active');
-selectSheet(name);
-});
-sheetTabs.appendChild(tab);
-});
-excelOpts.classList.add('active');
-convertBtn.classList.add('active');
-selectSheet(workbook.SheetNames[0]);
-setStatus('');
-};
-reader.readAsArrayBuffer(file);
-}
-function selectSheet(name){
-activeSheet=name;
-const data=sheetData[name];
-detectedRegions=detectRegions(data);
-renderRangeDisplay();
-renderPreview();
-}
-function renderRangeDisplay(){
-rangeDisplay.innerHTML='';
-if(detectedRegions.length===0){
-rangeDisplay.innerHTML='<div class="range-item"><span class="range-label">No active data detected</span></div>';
-multiRegionInfo.style.display='none';
-return;
-}
-detectedRegions.forEach((reg,i)=>{
-const item=document.createElement('div');
-item.className='range-item';
-const rangeStr=colName(reg.c1)+(reg.r1+1)+':'+colName(reg.c2)+(reg.r2+1);
-const rows=reg.r2-reg.r1+1,cols=reg.c2-reg.c1+1;
-item.innerHTML=`<span class="range-label">Region ${i+1}<span class="region-badge">${rows} rows x ${cols} cols</span></span><span class="range-value">${rangeStr}</span>`;
-rangeDisplay.appendChild(item);
-});
-if(detectedRegions.length>1){
-multiRegionInfo.style.display='block';
-regionList.innerHTML='';
-detectedRegions.forEach((reg,i)=>{
-const entry=document.createElement('div');entry.className='region-entry';
-const rangeStr=colName(reg.c1)+(reg.r1+1)+':'+colName(reg.c2)+(reg.r2+1);
-entry.innerHTML=`<span class="region-name">Region ${i+1}</span><span class="region-range">${rangeStr}</span>`;
-regionList.appendChild(entry);
-});
-}else{multiRegionInfo.style.display='none'}
-}
-function renderPreview(){
-const data=sheetData[activeSheet];
-if(!data||detectedRegions.length===0){
-previewScroll.innerHTML='<p style="padding:20px;color:var(--text-secondary);font-size:13px;text-align:center">No data to preview</p>';
-previewSection.classList.add('active');return;
-}
-let html='<table class="preview-table">';
-detectedRegions.forEach((reg,ri)=>{
-if(ri>0)html+=`<tr class="region-separator"><td colspan="${reg.c2-reg.c1+2}">Region ${ri+1}</td></tr>`;
-// header row
-html+='<tr><th>#</th>';
-for(let c=reg.c1;c<=reg.c2;c++)html+=`<th>${colName(c)}</th>`;
-html+='</tr>';
-const maxPreviewRows=50;
-const showRows=Math.min(reg.r2-reg.r1+1,maxPreviewRows);
-for(let r=reg.r1;r<reg.r1+showRows;r++){
-html+='<tr><td style="color:var(--text-secondary)">'+(r+1)+'</td>';
-for(let c=reg.c1;c<=reg.c2;c++){
-const val=data[r]&&data[r][c]!==undefined?data[r][c]:'';
-const display=String(val).length>30?String(val).substring(0,30)+'...':val;
-html+=`<td>${display}</td>`;
-}
-html+='</tr>';
-}
-if(reg.r2-reg.r1+1>maxPreviewRows){
-html+=`<tr class="region-separator"><td colspan="${reg.c2-reg.c1+2}">${reg.r2-reg.r1+1-maxPreviewRows} more rows</td></tr>`;
-}
-});
-html+='</table>';
-previewScroll.innerHTML=html;
-previewSection.classList.add('active');
-}
-function handleDocx(file){
-const reader=new FileReader();
-reader.onload=function(e){
-mammoth.convertToHtml({arrayBuffer:e.target.result}).then(result=>{
-previewScroll.innerHTML=`<div class="docx-preview">${result.value}</div>`;
-previewSection.classList.add('active');
-convertBtn.classList.add('active');
-excelOpts.classList.remove('active');
-setStatus('');
-}).catch(err=>{setStatus('Error reading DOCX: '+err.message)});
-};
-reader.readAsArrayBuffer(file);
-}
-function handleImage(file){
-const reader=new FileReader();
-reader.onload=function(e){
-previewScroll.innerHTML=`<div class="image-preview"><img src="${e.target.result}" alt="Preview"></div>`;
-previewSection.classList.add('active');
-convertBtn.classList.add('active');
-excelOpts.classList.remove('active');
-setStatus('');
-};
-reader.readAsDataURL(file);
-}
-/* ===== SPLIT TOGGLE ===== */
-splitToggle.addEventListener('change',()=>{splitConfig.classList.toggle('active',splitToggle.checked)});
-/* ===== ORIENTATION ===== */
-document.querySelectorAll('.orientation-btn').forEach(btn=>{
-btn.addEventListener('click',()=>{
-document.querySelectorAll('.orientation-btn').forEach(b=>b.classList.remove('active'));
-btn.classList.add('active');orientation=btn.dataset.orient;
-});
-});
-/* ===== PDF GENERATION ===== */
-convertBtn.addEventListener('click',async()=>{
-if(!currentFile)return;
-convertBtn.classList.add('loading');setStatus('Generating PDF...');
-await new Promise(r=>setTimeout(r,100));
-try{
-if(fileType==='excel')await generateExcelPDF();
-else if(fileType==='image')await generateImagePDF();
-else if(fileType==='docx')await generateDocxPDF();
-setStatus('PDF generated successfully');
-}catch(err){setStatus('Error: '+err.message);console.error(err)}
-convertBtn.classList.remove('loading');
-});
-function getOrientation(region){
-if(orientation!=='auto')return orientation;
-if(!region)return'p';
-const cols=region.c2-region.c1+1;
-return cols>6?'l':'p';
-}
-function addWatermark(doc){
-const wt=$('watermarkInput').value||'Rad Strix';
-const pw=doc.internal.pageSize.getWidth();
-const ph=doc.internal.pageSize.getHeight();
-const pages=doc.internal.getNumberOfPages();
-for(let i=1;i<=pages;i++){
-doc.setPage(i);
-doc.setFontSize(9);doc.setTextColor(180,180,180);
-doc.text(wt,pw/2,ph-10,{align:'center'});
-// subtle line above watermark
-doc.setDrawColor(200,200,200);doc.setLineWidth(0.2);
-const tw=doc.getTextWidth(wt);
-doc.line(pw/2-tw/2-10,ph-14,pw/2+tw/2+10,ph-14);
-}
-}
-async function generateExcelPDF(){
-const data=sheetData[activeSheet];
-if(!data||detectedRegions.length===0)throw new Error('No data detected');
-const pageSize=$('pageSize').value;
-const splitEnabled=splitToggle.checked;
-const maxCols=parseInt(maxColsInput.value)||8;
-const{jsPDF}=window.jspdf;
-let allSegments=[];
-for(const reg of detectedRegions){
-const totalCols=reg.c2-reg.c1+1;
-if(splitEnabled&&totalCols>maxCols){
-const numSplits=Math.ceil(totalCols/maxCols);
-for(let s=0;s<numSplits;s++){
-const sc=reg.c1+s*maxCols;
-const ec=Math.min(sc+maxCols-1,reg.c2);
-allSegments.push({r1:reg.r1,r2:reg.r2,c1:sc,c2:ec,parentRegion:reg});
-}
-}else{allSegments.push(reg)}
-}
-const orient=getOrientation(allSegments[0]);
-const doc=new jsPDF({orientation:orient,unit:'mm',format:pageSize});
-let firstPage=true;
-for(const seg of allSegments){
-if(!firstPage)doc.addPage(pageSize,getOrientation(seg));
-firstPage=false;
-// build table data
-const headers=[];
-for(let c=seg.c1;c<=seg.c2;c++){
-const headerVal=data[seg.r1]&&data[seg.r1][c]!==undefined?String(data[seg.r1][c]):colName(c);
-headers.push(headerVal);
-}
-const body=[];
-const startRow=seg.r1+1;
-for(let r=startRow;r<=seg.r2;r++){
-const row=[];
-for(let c=seg.c1;c<=seg.c2;c++){
-const val=data[r]&&data[r][c]!==undefined?String(data[r][c]):'';
-row.push(val);
-}
-// skip completely empty rows
-if(row.some(v=>v!==''))body.push(row);
-}
-if(body.length===0){
-// use all rows including first as body if first row isn't a clear header
-for(let r=seg.r1;r<=seg.r2;r++){
-const row=[];
-for(let c=seg.c1;c<=seg.c2;c++){
-const val=data[r]&&data[r][c]!==undefined?String(data[r][c]):'';
-row.push(val);
-}
-if(row.some(v=>v!==''))body.push(row);
-}
-doc.autoTable({body:body,startY:15,theme:'grid',
-styles:{fontSize:7,cellPadding:2,textColor:[60,60,60],lineColor:[200,200,200],lineWidth:0.1,font:'helvetica'},
-alternateRowStyles:{fillColor:[248,248,248]},
-margin:{top:15,bottom:20,left:10,right:10},
-didDrawPage:()=>{}
-});
-}else{
-doc.autoTable({head:[headers],body:body,startY:15,theme:'grid',
-styles:{fontSize:7,cellPadding:2,textColor:[60,60,60],lineColor:[200,200,200],lineWidth:0.1,font:'helvetica'},
-headStyles:{fillColor:[40,40,40],textColor:[240,240,240],fontSize:7,fontStyle:'bold',cellPadding:3},
-alternateRowStyles:{fillColor:[248,248,248]},
-margin:{top:15,bottom:20,left:10,right:10},
-didDrawPage:()=>{}
-});
-}
-}
-addWatermark(doc);
-const outputName=currentFile.name.replace(/\.[^.]+$/,'')+'.pdf';
-doc.save(outputName);
-}
-async function generateImagePDF(){
-const{jsPDF}=window.jspdf;
-const img=new Image();
-const dataUrl=await new Promise(res=>{const r=new FileReader();r.onload=e=>res(e.target.result);r.readAsDataURL(currentFile)});
-await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=dataUrl});
-const imgW=img.naturalWidth,imgH=img.naturalHeight;
-const orient=imgW>imgH?'l':'p';
-const pageSize=$('pageSize').value;
-const doc=new jsPDF({orientation:orient,unit:'mm',format:pageSize});
-const pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight();
-const margin=15;
-const availW=pw-2*margin,availH=ph-2*margin-10;
-const scale=Math.min(availW/imgW,availH/imgH);
-const w=imgW*scale,h=imgH*scale;
-const x=(pw-w)/2,y=(ph-h-10)/2;
-const ext=currentFile.name.split('.').pop().toLowerCase();
-const format=['jpg','jpeg'].includes(ext)?'JPEG':'PNG';
-doc.addImage(dataUrl,format,x,y,w,h);
-addWatermark(doc);
-doc.save(currentFile.name.replace(/\.[^.]+$/,'')+'.pdf');
-}
-async function generateDocxPDF(){
-const{jsPDF}=window.jspdf;
-const result=await mammoth.extractRawText({arrayBuffer:await currentFile.arrayBuffer()});
-const text=result.value;
-const pageSize=$('pageSize').value;
-const doc=new jsPDF({orientation:'p',unit:'mm',format:pageSize});
-const pw=doc.internal.pageSize.getWidth(),ph=doc.internal.pageSize.getHeight();
-const margin=20;
-const maxWidth=pw-2*margin;
-doc.setFontSize(11);doc.setTextColor(40,40,40);
-const lines=doc.splitTextToSize(text,maxWidth);
-let y=margin;
-for(const line of lines){
-if(y>ph-25){doc.addPage();y=margin}
-doc.text(line,margin,y);y+=6;
-}
-addWatermark(doc);
-doc.save(currentFile.name.replace(/\.[^.]+$/,'')+'.pdf');
-}
-})();
+class PlexusEffect{constructor(canvas,opts={}){this.canvas=canvas;this.ctx=canvas.getContext('2d');this.particles=[];this.mouse={x:null,y:null,px:null,py:null};this.opts={particleCount:opts.particleCount||80,particleSize:opts.particleSize||2,lineDistance:opts.lineDistance||150,mouseInfluence:opts.mouseInfluence||100,speed:opts.speed||0.3,viscosity:opts.viscosity||0.92,...opts};this.resize();this.init();this.bindEvents();this.animate()}
+resize(){this.width=this.canvas.width=window.innerWidth;this.height=this.canvas.height=window.innerHeight}
+init(){this.particles=[];for(let i=0;i<this.opts.particleCount;i++){this.particles.push({x:Math.random()*this.width,y:Math.random()*this.height,vx:(Math.random()-0.5)*this.opts.speed,vy:(Math.random()-0.5)*this.opts.speed,targetX:null,targetY:null})}}
+bindEvents(){window.addEventListener('resize',()=>{this.resize();this.init()});window.addEventListener('mousemove',e=>{this.mouse.px=this.mouse.x;this.mouse.py=this.mouse.y;this.mouse.x=e.clientX;this.mouse.y=e.clientY});window.addEventListener('mouseleave',()=>{this.mouse.x=null;this.mouse.y=null})}
+animate(){this.ctx.clearRect(0,0,this.width,this.height);this.particles.forEach((p,i)=>{if(this.mouse.x!==null&&this.mouse.px!==null){const dx=p.x-this.mouse.x,dy=p.y-this.mouse.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<this.opts.mouseInfluence){const mvx=(this.mouse.x-this.mouse.px)*0.05,mvy=(this.mouse.y-this.mouse.py)*0.05;p.vx+=(mvx*((this.opts.mouseInfluence-dist)/this.opts.mouseInfluence))*0.1;p.vy+=(mvy*((this.opts.mouseInfluence-dist)/this.opts.mouseInfluence))*0.1}}
+p.vx*=this.opts.viscosity;p.vy*=this.opts.viscosity;p.x+=p.vx;p.y+=p.vy;if(p.x<0||p.x>this.width)p.vx*=-1;if(p.y<0||p.y>this.height)p.vy*=-1;p.x=Math.max(0,Math.min(this.width,p.x));p.y=Math.max(0,Math.min(this.height,p.y));this.ctx.beginPath();this.ctx.arc(p.x,p.y,this.opts.particleSize,0,Math.PI*2);const gradient=this.ctx.createRadialGradient(p.x,p.y,0,p.x,p.y,this.opts.particleSize*2);gradient.addColorStop(0,'rgba(99,102,241,0.8)');gradient.addColorStop(1,'rgba(139,92,246,0.2)');this.ctx.fillStyle=gradient;this.ctx.fill();for(let j=i+1;j<this.particles.length;j++){const p2=this.particles[j],dx=p.x-p2.x,dy=p.y-p2.y,dist=Math.sqrt(dx*dx+dy*dy);if(dist<this.opts.lineDistance){const opacity=1-(dist/this.opts.lineDistance);const lineGradient=this.ctx.createLinearGradient(p.x,p.y,p2.x,p2.y);lineGradient.addColorStop(0,`rgba(99,102,241,${opacity*0.5})`);lineGradient.addColorStop(0.5,`rgba(139,92,246,${opacity*0.6})`);lineGradient.addColorStop(1,`rgba(99,102,241,${opacity*0.5})`);this.ctx.beginPath();this.ctx.moveTo(p.x,p.y);this.ctx.lineTo(p2.x,p2.y);this.ctx.strokeStyle=lineGradient;this.ctx.lineWidth=opacity*1.5;this.ctx.stroke()}}});this.ctx.fillStyle='rgba(99,102,241,0.03)';this.ctx.filter='blur(40px)';this.ctx.beginPath();this.ctx.arc(this.width*0.3,this.height*0.3,200,0,Math.PI*2);this.ctx.fill();this.ctx.beginPath();this.ctx.arc(this.width*0.7,this.height*0.7,250,0,Math.PI*2);this.ctx.fill();this.ctx.filter='none';requestAnimationFrame(()=>this.animate())}}
+class PDFConverter{constructor(){this.file=null;this.fileType=null;this.workbook=null;this.sheets=[];this.selectedSheets=[];this.detectedRanges={};this.init()}
+init(){this.bindElements();this.bindEvents();this.initSplash()}
+bindElements(){this.uploadZone=document.getElementById('upload-zone');this.fileInput=document.getElementById('file-input');this.filePreview=document.getElementById('file-preview');this.fileName=document.getElementById('file-name');this.fileSize=document.getElementById('file-size');this.removeFileBtn=document.getElementById('remove-file');this.excelOptions=document.getElementById('excel-options');this.sheetsContainer=document.getElementById('sheets-container');this.rangeDetection=document.getElementById('range-detection');this.activeRange=document.getElementById('active-range');this.rowCount=document.getElementById('row-count');this.colCount=document.getElementById('col-count');this.splitInfo=document.getElementById('split-info');this.splitCount=document.getElementById('split-count');this.convertBtn=document.getElementById('convert-btn');this.progressContainer=document.getElementById('progress-container');this.progressFill=document.getElementById('progress-fill');this.progressStatus=document.getElementById('progress-status');this.progressPercent=document.getElementById('progress-percent');this.watermarkToggle=document.getElementById('watermark-toggle');this.watermarkPreview=document.getElementById('watermark-preview');this.previewModal=document.getElementById('preview-modal');this.previewCanvas=document.getElementById('preview-canvas');this.closePreview=document.getElementById('close-preview');this.cancelDownload=document.getElementById('cancel-download');this.confirmDownload=document.getElementById('confirm-download');this.pageSizeSelect=document.getElementById('page-size');this.orientationSelect=document.getElementById('orientation');this.qualitySelect=document.getElementById('quality');this.maxColsInput=document.getElementById('max-cols')}
+bindEvents(){this.uploadZone.addEventListener('click',()=>this.fileInput.click());this.uploadZone.addEventListener('dragover',e=>{e.preventDefault();this.uploadZone.classList.add('dragover')});this.uploadZone.addEventListener('dragleave',()=>this.uploadZone.classList.remove('dragover'));this.uploadZone.addEventListener('drop',e=>{e.preventDefault();this.uploadZone.classList.remove('dragover');if(e.dataTransfer.files.length)this.handleFile(e.dataTransfer.files[0])});this.fileInput.addEventListener('change',e=>{if(e.target.files.length)this.handleFile(e.target.files[0])});this.removeFileBtn.addEventListener('click',()=>this.resetFile());this.watermarkToggle.addEventListener('click',()=>{this.watermarkToggle.classList.toggle('active');this.watermarkPreview.style.display=this.watermarkToggle.classList.contains('active')?'block':'none'});this.convertBtn.addEventListener('click',()=>this.convert());this.closePreview.addEventListener('click',()=>this.previewModal.classList.remove('active'));this.cancelDownload.addEventListener('click',()=>this.previewModal.classList.remove('active'));this.confirmDownload.addEventListener('click',()=>this.downloadPDF());this.maxColsInput.addEventListener('change',()=>this.updateSplitInfo())}
+initSplash(){const splashCanvas=document.getElementById('splash-plexus');if(splashCanvas){splashCanvas.style.cssText='position:absolute;inset:0;z-index:-1';new PlexusEffect(splashCanvas,{particleCount:60,lineDistance:120})}
+setTimeout(()=>{document.getElementById('splash').classList.add('hidden');new PlexusEffect(document.getElementById('plexus-canvas'))},2500)}
+handleFile(file){this.file=file;this.fileName.textContent=file.name;this.fileSize.textContent=this.formatSize(file.size);this.filePreview.classList.add('active');this.convertBtn.disabled=false;const ext=file.name.split('.').pop().toLowerCase();if(['xlsx','xls','csv'].includes(ext)){this.fileType='excel';this.parseExcel(file)}else if(['docx','doc'].includes(ext)){this.fileType='document';this.excelOptions.style.display='none'}else if(['png','jpg','jpeg','gif','webp'].includes(ext)){this.fileType='image';this.excelOptions.style.display='none'}}
+parseExcel(file){const reader=new FileReader();reader.onload=e=>{this.workbook=XLSX.read(e.target.result,{type:'array'});this.sheets=this.workbook.SheetNames;this.selectedSheets=[...this.sheets];this.renderSheets();this.excelOptions.style.display='block';if(this.sheets.length>0)this.analyzeSheet(this.sheets[0])};reader.readAsArrayBuffer(file)}
+renderSheets(){this.sheetsContainer.innerHTML=this.sheets.map((name,i)=>`<div class="sheet-item selected" data-sheet="${name}"><div class="sheet-checkbox"><svg fill="none" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg></div><span class="sheet-name">${name}</span><span class="sheet-cells" id="cells-${i}">analyzing...</span></div>`).join('');this.sheetsContainer.querySelectorAll('.sheet-item').forEach(item=>{item.addEventListener('click',()=>{item.classList.toggle('selected');const sheet=item.dataset.sheet;if(item.classList.contains('selected')){if(!this.selectedSheets.includes(sheet))this.selectedSheets.push(sheet)}else{this.selectedSheets=this.selectedSheets.filter(s=>s!==sheet)}
+if(this.selectedSheets.length>0)this.analyzeSheet(this.selectedSheets[0])})});this.sheets.forEach((name,i)=>{const range=this.detectActiveRange(this.workbook.Sheets[name]);document.getElementById(`cells-${i}`).textContent=range.display})}
+detectActiveRange(sheet){if(!sheet['!ref'])return{start:'A1',end:'A1',rows:0,cols:0,display:'Empty'};const ref=sheet['!ref'];const range=XLSX.utils.decode_range(ref);let minRow=Infinity,maxRow=-1,minCol=Infinity,maxCol=-1;for(let r=range.s.r;r<=range.e.r;r++){for(let c=range.s.c;c<=range.e.c;c++){const addr=XLSX.utils.encode_cell({r,c});if(sheet[addr]&&sheet[addr].v!==undefined&&sheet[addr].v!==''){minRow=Math.min(minRow,r);maxRow=Math.max(maxRow,r);minCol=Math.min(minCol,c);maxCol=Math.max(maxCol,c)}}}
+if(maxRow===-1)return{start:'A1',end:'A1',rows:0,cols:0,display:'Empty'};const start=XLSX.utils.encode_cell({r:minRow,c:minCol});const end=XLSX.utils.encode_cell({r:maxRow,c:maxCol});const rows=maxRow-minRow+1;const cols=maxCol-minCol+1;return{start,end,rows,cols,minRow,maxRow,minCol,maxCol,display:`${start}:${end}`}}
+analyzeSheet(sheetName){const sheet=this.workbook.Sheets[sheetName];const range=this.detectActiveRange(sheet);this.detectedRanges[sheetName]=range;this.activeRange.textContent=range.display;this.rowCount.textContent=range.rows;this.colCount.textContent=range.cols;this.updateSplitInfo()}
+updateSplitInfo(){const maxCols=parseInt(this.maxColsInput.value)||15;let totalSplits=0;this.selectedSheets.forEach(name=>{const range=this.detectedRanges[name]||this.detectActiveRange(this.workbook.Sheets[name]);if(range.cols>maxCols)totalSplits+=Math.ceil(range.cols/maxCols);else totalSplits++});if(totalSplits>this.selectedSheets.length){this.splitInfo.style.display='block';this.splitCount.textContent=totalSplits}else{this.splitInfo.style.display='none'}}
+formatSize(bytes){if(bytes<1024)return bytes+' B';if(bytes<1048576)return(bytes/1024).toFixed(1)+' KB';return(bytes/1048576).toFixed(1)+' MB'}
+resetFile(){this.file=null;this.workbook=null;this.sheets=[];this.selectedSheets=[];this.detectedRanges={};this.filePreview.classList.remove('active');this.excelOptions.style.display='none';this.convertBtn.disabled=true;this.fileInput.value=''}
+async convert(){this.progressContainer.classList.add('active');this.convertBtn.disabled=true;this.updateProgress(0,'Initializing...');try{if(this.fileType==='excel')await this.convertExcel();else if(this.fileType==='image')await this.convertImage();else if(this.fileType==='document')await this.convertDocument();this.updateProgress(100,'Complete')}catch(err){console.error(err);this.updateProgress(0,'Error: '+err.message)}finally{this.convertBtn.disabled=false}}
+updateProgress(percent,status){this.progressFill.style.width=percent+'%';this.progressPercent.textContent=percent+'%';this.progressStatus.textContent=status}
+async convertExcel(){const {PDFDocument,rgb,StandardFonts}=PDFLib;const pdfDoc=await PDFDocument.create();const font=await pdfDoc.embedFont(StandardFonts.Helvetica);const pageSize=this.getPageSize();const quality=this.getQuality();const maxCols=parseInt(this.maxColsInput.value)||15;const isLandscape=this.orientationSelect.value==='landscape';const [baseW,baseH]=pageSize;const [pageW,pageH]=isLandscape?[baseH,baseW]:[baseW,baseH];let processed=0;const total=this.selectedSheets.length;for(const sheetName of this.selectedSheets){this.updateProgress(Math.round((processed/total)*80),`Processing ${sheetName}...`);const sheet=this.workbook.Sheets[sheetName];const range=this.detectedRanges[sheetName]||this.detectActiveRange(sheet);if(range.rows===0)continue;const numSplits=Math.ceil(range.cols/maxCols);for(let split=0;split<numSplits;split++){const startCol=range.minCol+split*maxCols;const endCol=Math.min(startCol+maxCols-1,range.maxCol);const canvas=await this.renderSheetToCanvas(sheet,{minRow:range.minRow,maxRow:range.maxRow,minCol:startCol,maxCol:endCol},quality);const imgData=canvas.toDataURL('image/png');const img=await pdfDoc.embedPng(imgData);const page=pdfDoc.addPage([pageW,pageH]);const margin=40;const maxW=pageW-margin*2;const maxH=pageH-margin*2-30;const scale=Math.min(maxW/img.width,maxH/img.height,1);const imgW=img.width*scale;const imgH=img.height*scale;page.drawImage(img,{x:(pageW-imgW)/2,y:pageH-margin-imgH,width:imgW,height:imgH});if(this.watermarkToggle.classList.contains('active')){const text='rad strix';const textW=font.widthOfTextAtSize(text,10);page.drawText(text,{x:(pageW-textW)/2,y:25,size:10,font,color:rgb(0.5,0.5,0.5)})}}
+processed++}
+this.updateProgress(90,'Generating PDF...');this.pdfBytes=await pdfDoc.save();this.showPreview()}
+async renderSheetToCanvas(sheet,bounds,dpi){const{minRow,maxRow,minCol,maxCol}=bounds;const scale=dpi/72;const cellW=80*scale,cellH=24*scale,padding=10*scale;const cols=maxCol-minCol+1;const rows=maxRow-minRow+1;const canvas=document.createElement('canvas');canvas.width=cols*cellW+padding*2;canvas.height=rows*cellH+padding*2;const ctx=canvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,canvas.width,canvas.height);ctx.font=`${12*scale}px Inter, Arial, sans-serif`;ctx.textBaseline='middle';for(let r=minRow;r<=maxRow;r++){for(let c=minCol;c<=maxCol;c++){const addr=XLSX.utils.encode_cell({r,c});const cell=sheet[addr];const x=padding+(c-minCol)*cellW;const y=padding+(r-minRow)*cellH;ctx.strokeStyle='#e0e0e0';ctx.lineWidth=scale;ctx.strokeRect(x,y,cellW,cellH);if(cell&&cell.v!==undefined){ctx.fillStyle='#000000';const text=String(cell.v);const maxTextW=cellW-8*scale;let displayText=text;while(ctx.measureText(displayText).width>maxTextW&&displayText.length>1){displayText=displayText.slice(0,-1)}
+if(displayText!==text)displayText+='…';ctx.fillText(displayText,x+4*scale,y+cellH/2)}}}
+return canvas}
+async convertImage(){const {PDFDocument,rgb,StandardFonts}=PDFLib;const pdfDoc=await PDFDocument.create();const font=await pdfDoc.embedFont(StandardFonts.Helvetica);const pageSize=this.getPageSize();const isLandscape=this.orientationSelect.value==='landscape';const [baseW,baseH]=pageSize;const [pageW,pageH]=isLandscape?[baseH,baseW]:[baseW,baseH];this.updateProgress(30,'Loading image...');const imgData=await this.readFileAsDataURL(this.file);let img;if(this.file.type==='image/png')img=await pdfDoc.embedPng(imgData);else img=await pdfDoc.embedJpg(imgData);this.updateProgress(60,'Creating PDF...');const page=pdfDoc.addPage([pageW,pageH]);const margin=40;const maxW=pageW-margin*2;const maxH=pageH-margin*2-30;const scale=Math.min(maxW/img.width,maxH/img.height,1);const imgW=img.width*scale;const imgH=img.height*scale;page.drawImage(img,{x:(pageW-imgW)/2,y:pageH-margin-imgH,width:imgW,height:imgH});if(this.watermarkToggle.classList.contains('active')){const text='rad strix';const textW=font.widthOfTextAtSize(text,10);page.drawText(text,{x:(pageW-textW)/2,y:25,size:10,font,color:rgb(0.5,0.5,0.5)})}
+this.updateProgress(90,'Generating PDF...');this.pdfBytes=await pdfDoc.save();this.showPreview()}
+async convertDocument(){this.updateProgress(20,'Reading document...');const arrayBuffer=await this.file.arrayBuffer();const result=await mammoth.convertToHtml({arrayBuffer});this.updateProgress(50,'Rendering...');const container=document.createElement('div');container.style.cssText='position:absolute;left:-9999px;width:800px;padding:40px;background:#fff;font-family:Arial,sans-serif;font-size:14px;line-height:1.6;color:#000';container.innerHTML=result.value;document.body.appendChild(container);const canvas=await html2canvas(container,{scale:2,useCORS:true,backgroundColor:'#ffffff'});document.body.removeChild(container);this.updateProgress(70,'Creating PDF...');const{PDFDocument,rgb,StandardFonts}=PDFLib;const pdfDoc=await PDFDocument.create();const font=await pdfDoc.embedFont(StandardFonts.Helvetica);const pageSize=this.getPageSize();const isLandscape=this.orientationSelect.value==='landscape';const[baseW,baseH]=pageSize;const[pageW,pageH]=isLandscape?[baseH,baseW]:[baseW,baseH];const imgData=canvas.toDataURL('image/png');const img=await pdfDoc.embedPng(imgData);const margin=40;const maxW=pageW-margin*2;const maxH=pageH-margin*2-30;const scale=Math.min(maxW/img.width,maxH/img.height,1);const imgW=img.width*scale;const imgH=img.height*scale;const page=pdfDoc.addPage([pageW,pageH]);page.drawImage(img,{x:(pageW-imgW)/2,y:pageH-margin-imgH,width:imgW,height:imgH});if(this.watermarkToggle.classList.contains('active')){const text='rad strix';const textW=font.widthOfTextAtSize(text,10);page.drawText(text,{x:(pageW-textW)/2,y:25,size:10,font,color:rgb(0.5,0.5,0.5)})}
+this.updateProgress(90,'Generating PDF...');this.pdfBytes=await pdfDoc.save();this.showPreview()}
+readFileAsDataURL(file){return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)})}
+getPageSize(){const sizes={a4:[595.28,841.89],letter:[612,792],legal:[612,1008],a3:[841.89,1190.55]};return sizes[this.pageSizeSelect.value]||sizes.a4}
+getQuality(){const dpi={high:300,medium:150,web:72};return dpi[this.qualitySelect.value]||150}
+async showPreview(){this.updateProgress(95,'Generating preview...');const{PDFDocument}=PDFLib;const pdfDoc=await PDFDocument.load(this.pdfBytes);const page=pdfDoc.getPage(0);const{width,height}=page.getSize();const scale=Math.min(800/width,600/height,2);this.previewCanvas.width=width*scale;this.previewCanvas.height=height*scale;const ctx=this.previewCanvas.getContext('2d');ctx.fillStyle='#ffffff';ctx.fillRect(0,0,this.previewCanvas.width,this.previewCanvas.height);ctx.fillStyle='#f0f0f0';ctx.font='16px Inter';ctx.textAlign='center';ctx.fillText('PDF Preview',this.previewCanvas.width/2,this.previewCanvas.height/2-10);ctx.font='12px Inter';ctx.fillText(`${Math.round(width)} x ${Math.round(height)} pt`,this.previewCanvas.width/2,this.previewCanvas.height/2+15);ctx.fillText(`${pdfDoc.getPageCount()} page(s)`,this.previewCanvas.width/2,this.previewCanvas.height/2+35);this.previewModal.classList.add('active');this.updateProgress(100,'Ready to download')}
+downloadPDF(){const blob=new Blob([this.pdfBytes],{type:'application/pdf'});const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download=this.file.name.replace(/\.[^.]+$/,'')+'.pdf';a.click();URL.revokeObjectURL(url);this.previewModal.classList.remove('active');this.progressContainer.classList.remove('active')}}
+document.addEventListener('DOMContentLoaded',()=>new PDFConverter());
 </script>
 </body>
 </html>
